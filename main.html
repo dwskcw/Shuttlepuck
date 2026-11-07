@@ -19,9 +19,13 @@
             zoom: 17
         });
         
-        const tiles = new TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a>'
+        const tiles = new TileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/512/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiZHdza2N3IiwiYSI6ImNtdzZyd3d3ZzBpY2IzMG9wc28weXNsbHgifQ.9zT3RQw_K7LbSSYeJXxPNg', {
+    		tileSize: 512,
+    		zoomOffset: -1,
+    		maxZoom: 22,
+    		attribution:
+      			'© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ' +
+      			'© <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         });
 
         tiles.addTo(map);
