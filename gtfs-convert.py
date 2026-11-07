@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-"""Convert a CDTA GTFS feed into two compact JSON files for shubble-map.html.
+"""Helper script converting CDTA's GTFS data into JSON for shubble-map.html
 
-    python3 build_cdta.py [GTFS_DIR] [OUT_DIR]
+    Usage: python3 build_cdta.py [optional path/to/gtfs] [optional path/to/output]
+        By default the unzipped gtfs folder from CDTA should be in data, 
+            and output appears in the current directory
 
-    GTFS_DIR  folder holding routes.txt, trips.txt, stops.txt, shapes.txt,
-              stop_times.txt, calendar.txt, calendar_dates.txt   (default: data)
-    OUT_DIR   where to write the output                          (default: .)
+Produces:
+    cdta-transit.json: route lines, stops, service calendar
+        Smaller file loaded at startup
+    cdta-departures.json: scheduled departures per stop
+        Loaded when the stops checkbox is selected
 
-Writes:
-    cdta-transit.json     route lines, stops, service calendar   (small, loaded at startup)
-    cdta-departures.json  scheduled departures per stop          (large, loaded on first stop tap)
-
-Standard library only. Re-run whenever CDTA publishes a new feed
-(https://www.cdta.org/gtfs, updated 4-6 times a year).
+CDTA states they update this data around 4-6 times a year.
 """
 import csv
 import json
@@ -25,7 +24,7 @@ GTFS_DIR = Path(sys.argv[1] if len(sys.argv) > 1 else 'data2')
 OUT_DIR = Path(sys.argv[2] if len(sys.argv) > 2 else '.')
 
 # Point used to order routes by how close they run to campus (RPI Student Union).
-CAMPUS = (42.7307, -73.6767)
+CAMPUS = (42.730, -73.677)
 
 SIMPLIFY_M = 2.0     # Douglas-Peucker tolerance for route lines, in meters
 COVER_M = 30.0       # a shape point within this distance of a kept shape counts as "already drawn"
@@ -37,11 +36,11 @@ def read(name):
         yield from csv.DictReader(f)
 
 
-# ---------------------------------------------------------------- geometry
+# Latitude and longitude to xy-coordinates
 def to_xy(lat, lon, lat0):
     return ((lon * math.cos(math.radians(lat0)) * 111320.0), lat * 110540.0)
 
-
+# Provides the distance between two points
 def distance_km(a, b):
     lat0 = (a[0] + b[0]) / 2
     ax, ay = to_xy(a[0], a[1], lat0)
@@ -256,7 +255,7 @@ for (stop_id, service_id, route_id, headsign), minutes in groups.items():
     by_stop[stop_idx[stop_id]].append([service_idx[service_id], route_idx[route_id], headsign_idx[headsign], deltas])
 departures = {'headsigns': headsigns, 'stops': by_stop}
 
-# ---------------------------------------------------------------- write
+# Write cdta-transit and cdta-departures
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 for name, data in (('cdta-transit.json', transit), ('cdta-departures.json', departures)):
     path = OUT_DIR / name
