@@ -1,6 +1,6 @@
 import {
     LeafletMap, TileLayer, Polyline, CircleMarker, Marker, DivIcon,
-    LayerGroup, FeatureGroup, LatLngBounds
+    LayerGroup, LatLngBounds
 } from 'leaflet';
 
 // ---------------------------------------------------------------
@@ -38,8 +38,12 @@ tiles.addTo(map);
 // ---------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------
-const $legend = document.getElementById('legend');
 const $status = document.getElementById('status');
+const routeTreeContainer = document.getElementById('route-tree');
+
+// Only these two Shubble routes and two CDTA routes are initially visible.
+const selectedShuttleRoutes = new Set(['NORTH', 'WEST']);
+const selectedCdtaRoutes = new Set();
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -74,15 +78,24 @@ function setStatus(text, isError = false) {
 let routeData = {};
 let routesLoaded = false;
 const routeColors = new Map();   // route key -> color (hidden routes get grey)
+const shuttleRouteLayers = new Map(); // route key -> independently toggleable layer
+
+function syncShuttleVisibility() {
+    for (const [key, layer] of shuttleRouteLayers) {
+        if (selectedShuttleRoutes.has(key)) {
+            if (!map.hasLayer(layer)) map.addLayer(layer);
+        } else if (map.hasLayer(layer)) {
+            map.removeLayer(layer);
+        }
+    }
+    syncVehicleVisibility();
+}
 
 async function loadRoutes() {
     routeData = await getJSON('/api/routes');
 
-    const casings = new LayerGroup();   // white outline under the colored lines
-    const lines = new FeatureGroup();
-    const stops = new LayerGroup();
-
-    $legend.replaceChildren();
+    const visibleBounds = new LatLngBounds();
+    shuttleRouteLayers.clear();
 
     for (const [key, route] of Object.entries(routeData)) {
         const visible = isVisibleColor(route.COLOR);
@@ -90,16 +103,20 @@ async function loadRoutes() {
         if (!visible) continue;
 
         const color = routeColors.get(key);
+        const routeLayer = new LayerGroup();
 
         for (const leg of route.ROUTES ?? []) {
-            casings.addLayer(new Polyline(leg, {
+            routeLayer.addLayer(new Polyline(leg, {
                 color: '#ffffff', weight: 9, opacity: 0.9,
                 lineCap: 'round', lineJoin: 'round', interactive: false
             }));
-            lines.addLayer(new Polyline(leg, {
+            routeLayer.addLayer(new Polyline(leg, {
                 color, weight: 5, opacity: 0.95,
                 lineCap: 'round', lineJoin: 'round', interactive: false
             }));
+            if (selectedShuttleRoutes.has(key)) {
+                for (const point of leg) visibleBounds.extend(point);
+            }
         }
 
         // STOPS lists the real stops (POLYLINE_STOPS also has "ghost" stops
@@ -117,23 +134,14 @@ async function loadRoutes() {
                 radius: 5, color, weight: 3, fillColor: '#ffffff', fillOpacity: 1
             });
             marker.bindTooltip(stop.NAME);
-            stops.addLayer(marker);
+            routeLayer.addLayer(marker);
         }
-
-        const li = document.createElement('li');
-        const swatch = document.createElement('span');
-        swatch.className = 'swatch';
-        swatch.style.background = color;
-        li.append(swatch, routeLabel(key));
-        $legend.append(li);
+        shuttleRouteLayers.set(key, routeLayer);
     }
 
-    map.addLayer(casings);
-    map.addLayer(lines);
-    map.addLayer(stops);
-
-    const bounds = lines.getBounds();
-    if (bounds.isValid()) map.fitBounds(bounds, { padding: [40, 40] });
+    syncShuttleVisibility();
+    if (visibleBounds.isValid()) map.fitBounds(visibleBounds, { padding: [40, 40] });
+    renderRouteTree(); // replace placeholder colors with API-provided shuttle colors
 
     routesLoaded = true;
 }
@@ -149,6 +157,23 @@ async function loadRoutes() {
 const vehicleLayer = new LayerGroup();
 map.addLayer(vehicleLayer);
 const markers = new Map();   // vehicleId -> Marker
+const vehicleRoutes = new Map(); // last matched route for each vehicle
+
+function showVehicleForRoute(routeName) {
+    // When velocities are unavailable, show grey markers as long as at
+    // least one shuttle route is enabled.
+    return routeName ? selectedShuttleRoutes.has(routeName) : selectedShuttleRoutes.size > 0;
+}
+
+function syncVehicleVisibility() {
+    for (const [id, marker] of markers) {
+        if (showVehicleForRoute(vehicleRoutes.get(id))) {
+            if (!vehicleLayer.hasLayer(marker)) vehicleLayer.addLayer(marker);
+        } else if (vehicleLayer.hasLayer(marker)) {
+            vehicleLayer.removeLayer(marker);
+        }
+    }
+}
 
 function shuttleIcon(color, heading) {
     const deg = Number.isFinite(heading) ? heading : 0;
@@ -204,6 +229,7 @@ async function refreshVehicles() {
         if (!Number.isFinite(v.latitude) || !Number.isFinite(v.longitude)) continue;
 
         const vel = velocities[id] ?? {};
+        vehicleRoutes.set(id, vel.route_name ?? null);
         const color = routeColors.get(vel.route_name) ?? OFF_ROUTE_COLOR;
         const heading = v.heading_degrees;
         const latlng = [v.latitude, v.longitude];
@@ -220,7 +246,6 @@ async function refreshVehicles() {
                 zIndexOffset: 1000
             });
             marker.bindPopup(popupHtml(v, vel));
-            vehicleLayer.addLayer(marker);
             markers.set(id, marker);
         }
     }
@@ -230,8 +255,11 @@ async function refreshVehicles() {
         if (!(id in locations)) {
             vehicleLayer.removeLayer(marker);
             markers.delete(id);
+            vehicleRoutes.delete(id);
         }
     }
+
+    syncVehicleVisibility();
 
     return { count: markers.size, routeMatching: velResult.status === 'fulfilled' };
 }
@@ -289,16 +317,11 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-startPolling();
-
 // ---------------------------------------------------------------
 // CDTA: static GTFS-derived route geometry, stops, and departures.
 // These two JSON files are served locally by dev-server.mjs; neither
 // request goes through the Shubble /api/* proxy.
 // ---------------------------------------------------------------
-const cdtaLineToggle = document.getElementById('cdta-lines-toggle');
-const cdtaStopToggle = document.getElementById('cdta-stops-toggle');
-const cdtaRouteSelect = document.getElementById('cdta-route-select');
 const cdtaDateInput = document.getElementById('cdta-date');
 const cdtaStatus = document.getElementById('cdta-status');
 const cdtaLineLayer = new LayerGroup().addTo(map);
@@ -359,15 +382,11 @@ function cdtaColor(route) {
 
 function cdtaDrawLines() {
     cdtaLineLayer.clearLayers();
-    if (!cdtaTransit || !cdtaLineToggle.checked) return;
+    if (!cdtaTransit) return;
 
-    const selection = cdtaRouteSelect.value;
-    const routes = selection === 'all'
-        ? cdtaTransit.routes
-        : [cdtaTransit.routes[Number(selection)]].filter(Boolean);
-    const selectedBounds = new LatLngBounds();
-
-    for (const route of routes) {
+    for (const index of selectedCdtaRoutes) {
+        const route = cdtaTransit.routes[index];
+        if (!route) continue;
         for (const encoded of route.lines) {
             const points = cdtaDecodeLine(encoded);
             if (points.length < 2) continue;
@@ -375,14 +394,7 @@ function cdtaDrawLines() {
                 color: cdtaColor(route), weight: 3, opacity: 0.65
             }).bindPopup(`${esc(route.short)} — ${esc(route.name)}`)
                 .addTo(cdtaLineLayer);
-            if (selection !== 'all') {
-                for (const point of points) selectedBounds.extend(point);
-            }
         }
-    }
-
-    if (selection !== 'all' && selectedBounds.isValid()) {
-        map.fitBounds(selectedBounds, {padding: [35, 35], maxZoom: 16});
     }
 }
 
@@ -418,12 +430,11 @@ function cdtaStopDepartures(stopIndex, date) {
     // IMPORTANT: departures.stops keys are indexes into transit.stops,
     // NOT public CDTA stop IDs (e.g. "07216").
     const entries = cdtaDepartures.stops[String(stopIndex)] || [];
-    const routeFilter = cdtaRouteSelect.value;
     const yesterday = cdtaPreviousDate(date);
     const times = [];
 
     for (const [serviceIndex, routeIndex, headsignIndex, compressed] of entries) {
-        if (routeFilter !== 'all' && routeIndex !== Number(routeFilter)) continue;
+        if (!selectedCdtaRoutes.has(routeIndex)) continue;
         const activeToday = cdtaServiceRuns(serviceIndex, date);
         const activeYesterday = cdtaServiceRuns(serviceIndex, yesterday);
         if (!activeToday && !activeYesterday) continue;
@@ -503,15 +514,14 @@ function cdtaPopup(stop, index) {
 function cdtaDrawStops() {
     cdtaStopLayer.clearLayers();
     cdtaSelectedMarker = null;
-    if (!cdtaTransit || !cdtaStopToggle.checked || map.getZoom() < 13) return;
+    if (!cdtaTransit || selectedCdtaRoutes.size === 0 || map.getZoom() < 13) return;
 
     const bounds = map.getBounds().pad(0.15);
-    const selection = cdtaRouteSelect.value;
     cdtaTransit.stops.forEach((stop, index) => {
         const [id, name, lat, lon, routeIndexes] = stop;
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
         if (!bounds.contains([lat, lon])) return;
-        if (selection !== 'all' && !routeIndexes.includes(Number(selection))) return;
+        if (!routeIndexes.some(routeIndex => selectedCdtaRoutes.has(routeIndex))) return;
 
         const marker = new CircleMarker([lat, lon], {
             radius: 4, color: '#fff', weight: 1.5,
@@ -543,12 +553,9 @@ async function loadCDTA() {
             !Array.isArray(cdtaTransit.services)) throw new Error('Invalid CDTA transit JSON');
 
         for (const [index, route] of cdtaTransit.routes.entries()) {
-            const option = document.createElement('option');
-            option.value = String(index);
-            option.textContent = `${route.short} — ${route.name}`;
-            cdtaRouteSelect.append(option);
+            if (route.short === '87' || route.short === '286') selectedCdtaRoutes.add(index);
         }
-        cdtaRouteSelect.disabled = false;
+        renderRouteTree();
         cdtaDrawLines();
         cdtaDrawStops();
         cdtaSetStatus(`${cdtaTransit.routes.length} routes · ${cdtaTransit.stops.length.toLocaleString()} stops · loading schedules…`);
@@ -570,12 +577,195 @@ async function loadCDTA() {
     }
 }
 
-cdtaLineToggle.addEventListener('change', cdtaDrawLines);
-cdtaStopToggle.addEventListener('change', cdtaDrawStops);
-cdtaRouteSelect.addEventListener('change', () => {
+// ---------------------------------------------------------------
+// Unified nested route picker. These categories are UI groupings, not
+// official CDTA route classifications. Every route remains available.
+// ---------------------------------------------------------------
+const CDTA_ROUTE_GROUPS = {
+    featured: ['87', '286', '22', '85', '289', '802'],
+    moreTroy: ['815', '182', '224', '370', '922', '923', '808', '821', '524'],
+    albany: ['190', '801', '805', '803', '806', '737', '214', '812', '100',
+        '106', '872', '117', '125', '114', '93', '10', '12', '107', '519',
+        '540', '560', '1', '712', '807', '905', '13', '18', '910', '233', '155', '813'],
+    schenectady: ['355', '763', '810', '605', '351', '353', '450'],
+    saratoga: ['840', '452', '713', '600', '601'],
+    glensFalls: ['404', '407', '402', '804', '411', '412', '419', '876', '877']
+};
+
+const expandedRouteGroups = new Map();
+let routeTreeNodes = [];
+
+function routeGroup(id, label, children, open = false) {
+    return {kind: 'group', id, label, children, open};
+}
+
+function createRouteTreeModel() {
+    const shuttles = routeGroup('shuttles', 'Shuttles', [
+        {kind: 'shuttle', id: 'NORTH', label: 'North Shuttle', color: routeColors.get('NORTH') || '#2563eb'},
+        {kind: 'shuttle', id: 'WEST', label: 'West Shuttle', color: routeColors.get('WEST') || '#b45309'}
+    ], true);
+
+    if (!cdtaTransit) return [shuttles, routeGroup('cdta', 'CDTA (loading…)', [], true)];
+
+    const byShort = new Map(cdtaTransit.routes.map((route, index) => [route.short, index]));
+    const assigned = new Set();
+    const routeLeaves = shortNames => shortNames.flatMap(short => {
+        const index = byShort.get(short);
+        if (index === undefined || assigned.has(index)) return [];
+        assigned.add(index);
+        const route = cdtaTransit.routes[index];
+        return [{kind: 'cdta', id: index, label: `${route.short} · ${route.name}`, color: cdtaColor(route)}];
+    });
+
+    const featured = routeLeaves(CDTA_ROUTE_GROUPS.featured);
+    const moreTroy = routeLeaves(CDTA_ROUTE_GROUPS.moreTroy);
+    const albany = routeLeaves(CDTA_ROUTE_GROUPS.albany);
+    const schenectady = routeLeaves(CDTA_ROUTE_GROUPS.schenectady);
+    const saratoga = routeLeaves(CDTA_ROUTE_GROUPS.saratoga);
+    const glensFalls = routeLeaves(CDTA_ROUTE_GROUPS.glensFalls);
+    const remaining = cdtaTransit.routes.flatMap((route, index) => {
+        if (assigned.has(index)) return [];
+        return [{kind: 'cdta', id: index, label: `${route.short} · ${route.name}`, color: cdtaColor(route)}];
+    });
+
+    const nonTroy = [
+        routeGroup('albany', 'Albany area', albany),
+        routeGroup('schenectady', 'Schenectady area', schenectady),
+        routeGroup('saratoga', 'Saratoga / Amsterdam', saratoga),
+        routeGroup('glens-falls', 'Glens Falls / North', glensFalls)
+    ];
+    if (remaining.length) nonTroy.push(routeGroup('other', 'Other routes', remaining));
+
+    return [shuttles, routeGroup('cdta', 'CDTA', [
+        ...featured,
+        routeGroup('troy-more', 'More Troy / nearby routes', moreTroy),
+        routeGroup('non-troy', 'Non-Troy routes', nonTroy)
+    ], true)];
+}
+
+function routeLeafEnabled(node) {
+    return node.kind === 'shuttle'
+        ? selectedShuttleRoutes.has(node.id)
+        : selectedCdtaRoutes.has(node.id);
+}
+
+function setRouteLeaf(node, enabled) {
+    const selected = node.kind === 'shuttle' ? selectedShuttleRoutes : selectedCdtaRoutes;
+    if (enabled) selected.add(node.id);
+    else selected.delete(node.id);
+}
+
+function setGroupDescendants(group, enabled) {
+    for (const child of group.children) {
+        if (child.kind === 'group') setGroupDescendants(child, enabled);
+        else setRouteLeaf(child, enabled);
+    }
+}
+
+function syncRouteTreeCheckboxes() {
+    function countSelected(node) {
+        if (node.kind !== 'group') {
+            node.checkbox.checked = routeLeafEnabled(node);
+            return {selected: Number(node.checkbox.checked), total: 1};
+        }
+        const counts = node.children.map(countSelected);
+        const selected = counts.reduce((sum, count) => sum + count.selected, 0);
+        const total = counts.reduce((sum, count) => sum + count.total, 0);
+        node.checkbox.checked = total > 0 && selected === total;
+        node.checkbox.indeterminate = selected > 0 && selected < total;
+        node.checkbox.disabled = total === 0;
+        node.count.textContent = `${selected}/${total}`;
+        return {selected, total};
+    }
+    routeTreeNodes.forEach(countSelected);
+}
+
+function applyRouteSelection() {
+    syncShuttleVisibility();
     cdtaDrawLines();
     cdtaDrawStops();
-});
+    syncRouteTreeCheckboxes();
+}
+
+function renderRouteTree() {
+    routeTreeNodes = createRouteTreeModel();
+    routeTreeContainer.replaceChildren();
+
+    function buildNode(node) {
+        const container = document.createElement('div');
+        container.className = `route-tree-node ${node.kind === 'group' ? 'route-tree-group' : ''}`;
+        const row = document.createElement('div');
+        row.className = 'route-tree-row';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        node.checkbox = checkbox;
+
+        if (node.kind === 'group') {
+            const children = document.createElement('div');
+            children.className = 'route-tree-children';
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'route-tree-disclosure';
+            const isOpen = expandedRouteGroups.get(node.id) ?? node.open;
+            children.hidden = !isOpen;
+            button.textContent = isOpen ? '▾' : '▸';
+            button.setAttribute('aria-expanded', String(isOpen));
+            button.setAttribute('aria-label', `Expand or collapse ${node.label}`);
+            button.addEventListener('click', () => {
+                children.hidden = !children.hidden;
+                const expanded = !children.hidden;
+                expandedRouteGroups.set(node.id, expanded);
+                button.textContent = expanded ? '▾' : '▸';
+                button.setAttribute('aria-expanded', String(expanded));
+            });
+            row.append(button);
+
+            checkbox.addEventListener('change', () => {
+                setGroupDescendants(node, checkbox.checked);
+                applyRouteSelection();
+            });
+
+            const label = document.createElement('label');
+            const name = document.createElement('span');
+            name.className = 'route-name';
+            name.textContent = node.label;
+            label.append(checkbox, name);
+            row.append(label);
+
+            const count = document.createElement('span');
+            count.className = 'route-tree-count';
+            node.count = count;
+            row.append(count);
+            container.append(row);
+            node.children.forEach(child => children.append(buildNode(child)));
+            container.append(children);
+        } else {
+            const spacer = document.createElement('span');
+            spacer.className = 'route-tree-leaf-spacer';
+            row.append(spacer);
+            const label = document.createElement('label');
+            const color = document.createElement('span');
+            color.className = 'route-swatch';
+            color.style.backgroundColor = node.color;
+            const name = document.createElement('span');
+            name.className = 'route-name';
+            name.textContent = node.label;
+            label.append(checkbox, color, name);
+            row.append(label);
+            container.append(row);
+
+            checkbox.addEventListener('change', () => {
+                setRouteLeaf(node, checkbox.checked);
+                applyRouteSelection();
+            });
+        }
+        return container;
+    }
+
+    routeTreeNodes.forEach(node => routeTreeContainer.append(buildNode(node)));
+    syncRouteTreeCheckboxes();
+}
+
 cdtaDateInput.addEventListener('change', () => {
     if (cdtaSelectedMarker && cdtaStopLayer.hasLayer(cdtaSelectedMarker)) {
         cdtaSelectedMarker.setPopupContent(
@@ -584,4 +774,6 @@ cdtaDateInput.addEventListener('change', () => {
     }
 });
 map.on('moveend zoomend', cdtaDrawStops);
+renderRouteTree();
+startPolling();
 loadCDTA();
