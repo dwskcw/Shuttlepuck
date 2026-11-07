@@ -1,0 +1,2 @@
+agency_id,agency_name,agency_url,agency_timezone,agency_lang,agency_phone,agency_fare_url,agency_email
+1,"CDTA",http://www.cdta.org,America/New_York,en,518-437-8300,https://nav.cdta.org,customerservice@cdta.org

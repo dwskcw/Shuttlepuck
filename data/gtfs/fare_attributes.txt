@@ -1,0 +1,6 @@
+fare_id,price,currency_type,payment_method,transfers,agency_id
+base,1.5,USD,0,0,1
+baseBP,2,USD,0,0,1
+nx_zone_1,4,USD,0,0,1
+nx_zone_2,5,USD,0,0,1
+nx_zone_3,7,USD,0,0,1
