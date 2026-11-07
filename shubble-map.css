@@ -1,0 +1,86 @@
+html, body { height: 100%; margin: 0; }
+#map { height: 100%; }
+
+/* Shuttle marker: a colored dot with a pointer that rotates to the heading. */
+.shuttle-icon { background: none; border: 0; }
+.shuttle {
+    --c: #666;
+    position: relative;
+    width: 36px;
+    height: 36px;
+}
+.shuttle::before {            /* heading pointer */
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    margin-left: -7px;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 12px solid var(--c);
+}
+.shuttle::after {             /* body */
+    content: "";
+    position: absolute;
+    inset: 7px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    background: var(--c);
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+}
+
+.shuttle-popup strong { display: block; margin-bottom: 2px; }
+.shuttle-popup .muted { color: #666; }
+
+/* Legend + status */
+#panel {
+    position: absolute;
+    left: 10px;
+    bottom: 24px;
+    z-index: 1000;
+    max-width: min(260px, calc(100% - 20px));
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .94);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, .3);
+    font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: #1c1c1c;
+}
+#legend { list-style: none; margin: 0 0 6px; padding: 0; }
+#legend:empty { display: none; }
+#legend li { display: flex; align-items: center; gap: 8px; }
+#legend .swatch { width: 18px; height: 4px; border-radius: 2px; flex: none; }
+#status { margin: 0; color: #555; }
+#status.error { color: #b00020; }
+
+/* CDTA is a separate overlay; it never changes Shubble's API polling. */
+#cdta-panel {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    z-index: 1000;
+    width: min(250px, calc(100% - 20px));
+    padding: 11px 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, .3);
+    font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+#cdta-panel .cdta-title { font-size: 15px; font-weight: 700; margin-bottom: 7px; }
+#cdta-panel .cdta-toggles { display: flex; gap: 14px; margin-bottom: 8px; }
+#cdta-panel label { display: flex; align-items: center; gap: 5px; }
+#cdta-panel .cdta-field { display: block; margin: 6px 0; }
+#cdta-panel select, #cdta-panel input[type="date"] {
+    box-sizing: border-box; width: 100%; margin-top: 3px;
+    padding: 5px; border: 1px solid #b8c3cf; border-radius: 4px;
+    background: white; color: #1c1c1c;
+}
+#cdta-status { color: #555; margin: 8px 0 0; font-size: 12px; }
+#cdta-status.error { color: #b00020; }
+.cdta-popup { min-width: 225px; max-width: 310px; }
+.cdta-popup h3 { font-size: 15px; margin: 0 0 3px; }
+.cdta-popup .muted { color: #666; font-size: 12px; }
+.cdta-popup ul { margin: 7px 0 0; padding: 0; list-style: none; max-height: 200px; overflow-y: auto; }
+.cdta-popup li { padding: 5px 0; border-top: 1px solid #e1e5e9; }
+.cdta-popup .cdta-route-chip { padding: 1px 4px; border-radius: 3px; margin: 0 5px; }

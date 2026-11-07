@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Shubble live map</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@2.0.0-beta.2/dist/leaflet.css">
+    <script type="importmap">
+        {"imports": {"leaflet": "https://cdn.jsdelivr.net/npm/leaflet@2.0.0-beta.2/dist/leaflet.js"}}
+    </script>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="./shubble-map.css">
+</head>
+<body>
+    <div id="map"></div>
+    <aside id="panel">
+        <ul id="legend" aria-label="Routes"></ul>
+        <p id="status" role="status">Loading routes…</p>
+    </aside>
+    <aside id="cdta-panel" aria-label="CDTA bus overlays">
+        <div class="cdta-title">CDTA routes and schedules</div>
+        <div class="cdta-toggles">
+            <label><input id="cdta-lines-toggle" type="checkbox" checked> Routes</label>
+            <label><input id="cdta-stops-toggle" type="checkbox" checked> Stops</label>
+        </div>
+        <label class="cdta-field">CDTA route
+            <select id="cdta-route-select" disabled><option value="all">All routes</option></select>
+        </label>
+        <label class="cdta-field">Schedule date
+            <input id="cdta-date" type="date">
+        </label>
+        <p id="cdta-status" role="status">Loading CDTA data…</p>
+    </aside>
+
+    <script type="module" src="./shubble-map.js"></script>
+</body>
+</html>
