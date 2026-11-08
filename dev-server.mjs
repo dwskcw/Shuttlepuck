@@ -50,7 +50,7 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    const filename = pathname === '/' ? '/shubble-map.html' : pathname;
+    const filename = pathname === '/' ? '/map.html' : pathname;
     const contentType = staticContentTypes.get(filename);
     if (contentType) {
         try {
