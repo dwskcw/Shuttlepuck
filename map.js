@@ -38,6 +38,8 @@ const API_BASE = !apiParam || apiParam === 'same-origin'
     : apiParam.replace(/\/$/, '');
 const POLL_MS = 5000;            // same cadence as the Shubble frontend
 const OFF_ROUTE_COLOR = '#666666';
+const MOBILE_QUERY = '(max-width: 768px)';
+const mobileMq = window.matchMedia(MOBILE_QUERY);
 
 // ---------------------------------------------------------------
 // Map + base tiles
@@ -742,6 +744,7 @@ const expandedRouteGroups = new Map();
 let routeTreeNodes = [];
 
 function routeGroup(id, label, children, open = false) {
+    if (mobileMq.matches && !expandedRouteGroups.has(id)) open = false;
     return {kind: 'group', id, label, children, open};
 }
 
@@ -927,6 +930,37 @@ cdtaDateInput.addEventListener('change', () => {
     }
 });
 map.on('moveend zoomend', cdtaDrawStops);
+
+// ---------------------------------------------------------------
+// Mobile route-panel drawer (bottom sheet)
+// ---------------------------------------------------------------
+const panel = document.getElementById('panel');
+const routesOpenBtn = document.getElementById('routes-open');
+const routesCloseBtn = document.getElementById('routes-close');
+
+function setPanelOpen(open) {
+    if (!mobileMq.matches) return;           // no-op on desktop
+    panel.classList.toggle('open', open);
+    panel.setAttribute('aria-hidden', String(!open));
+    routesOpenBtn.setAttribute('aria-expanded', String(open));
+    (open ? routesCloseBtn : routesOpenBtn).focus();
+}
+
+routesOpenBtn.addEventListener('click', () => setPanelOpen(true));
+routesCloseBtn.addEventListener('click', () => setPanelOpen(false));
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && mobileMq.matches && panel.classList.contains('open')) {
+        setPanelOpen(false);
+    }
+});
+mobileMq.addEventListener('change', () => {
+    panel.classList.remove('open');
+    routesOpenBtn.setAttribute('aria-expanded', 'false');
+    if (mobileMq.matches) panel.setAttribute('aria-hidden', 'true');
+    else panel.removeAttribute('aria-hidden');
+});
+if (mobileMq.matches) panel.setAttribute('aria-hidden', 'true');
+
 renderRouteTree();
 initJourneyUi({ map, apiBase: API_BASE, mapboxToken: MAPBOX_TOKEN });
 startPolling();

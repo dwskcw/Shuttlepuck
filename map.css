@@ -1,6 +1,77 @@
 html, body { height: 100%; margin: 0; }
 #map { height: 100%; }
 
+.panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.panel-close {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 4px 10px;
+    color: inherit;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.panel-close:hover,
+.panel-close:focus-visible { background: rgba(0, 0, 0, 0.08); }
+
+.fab-routes {
+    display: none;
+    position: fixed;
+    left: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0));
+    z-index: 1000;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 999px;
+    background: #2563eb;
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    #panel {
+        position: fixed;
+        top: auto;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: auto;
+        max-height: 85dvh;          /* dvh handles mobile URL-bar churn */
+        overflow-y: auto;
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
+        z-index: 1100;
+
+        transform: translateY(100%);
+        visibility: hidden;         /* not focusable while closed */
+        transition: transform 0.25s ease-out, visibility 0s linear 0.25s;
+    }
+    #panel.open {
+        transform: translateY(0);
+        visibility: visible;
+        transition: transform 0.25s ease-out, visibility 0s linear 0s;
+    }
+
+    .panel-close { display: inline-flex; align-items: center; justify-content: center; }
+    .fab-routes  { display: inline-flex; align-items: center; gap: 6px; }
+
+    /* If your #journey-open already sits bottom-left, lift it above the FAB.
+       Adjust or delete this rule to match your layout. */
+    #journey-open { bottom: calc(72px + env(safe-area-inset-bottom, 0)); }
+}
+
 /* Shuttle marker: a colored dot with a pointer that rotates to the heading. */
 .shuttle-icon { background: none; border: 0; }
 .shuttle {
@@ -231,3 +302,21 @@ html, body { height: 100%; margin: 0; }
 .journey-pin-destination .journey-pin-dot { background: #16a34a; }
 .journey-pin-dot > * { transform: rotate(45deg); }
 .journey-pin-dot { font-size: 0; } /* letter hidden; shape + color carry meaning */
+
+/* Neutral chips/labels for modes that aren't transit lines */
+.journey-chip-walk { background: #e5e7eb; color: #374151; }
+.journey-chip-bike { background: #dcfce7; color: #166534; }
+
+.leg-label {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 4px;
+    background: #e5e7eb;
+    color: #374151;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-right: 4px;
+    vertical-align: middle;
+}

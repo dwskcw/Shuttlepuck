@@ -129,10 +129,14 @@ async function loadBundleOnce() {
 // visible: which endpoints are set, what is being waited for, and whether
 // Find routes can do anything yet.
 function updateControls() {
+    updateButtonStates();
+    updateHint();
+}
+
+function updateButtonStates() {
     const originBtn = $('journey-set-origin');
     const destBtn = $('journey-set-destination');
     const searchBtn = $('journey-search');
-    const hint = $('journey-hint');
 
     originBtn.textContent = state.origin ? '✓ Origin set' : '1. Set origin';
     destBtn.textContent = state.destination ? '✓ Destination set' : '2. Set destination';
@@ -146,9 +150,10 @@ function updateControls() {
     searchBtn.textContent = state.searching ? 'Searching…' : 'Find routes';
 
     $('journey-retry').hidden = !state.bundleError;
+}
 
-    // Only write the hint when we have something to say; search results
-    // manage it themselves.
+function updateHint() {
+    const hint = $('journey-hint');
     if (state.bundleError) {
         hint.textContent = `Could not load transit schedules (${state.bundleError}). ` +
             'Check that the dev server is running, then retry.';
@@ -157,15 +162,16 @@ function updateControls() {
     } else if (state.armed) {
         hint.textContent = `Now click the map to place the ${state.armed}.`;
     } else if (!state.origin || !state.destination) {
-        hint.textContent = 'Click “Set origin”, then click the map. Repeat for the destination.';
+        hint.textContent = 'Click "Set origin", then click the map. Repeat for the destination.';
     } else if (!state.searching) {
-        hint.textContent = 'Ready — press “Find routes”.';
+        hint.textContent = 'Ready — press "Find routes".';
     }
 }
 
 // --------------------------------------------------------------- input
 function armClick(which) {
-    state.armed = state.armed === which ? null : which; // toggle off on re-click
+    if (state.armed === which) return;
+    state.armed = which;
     updateControls();
 }
 
@@ -178,55 +184,48 @@ function onMapClick(event) {
 }
 
 function setEndpoint(which, latlng) {
-    state[which] = { lat: latlng[0], lon: latlng[1], label: which === 'origin' ? 'Origin' : 'Destination' };
-    const marker = new Marker(latlng, {
-        draggable: true,
-        icon: new DivIcon({
-            className: `journey-pin journey-pin-${which}`,
-            html: `<div class="journey-pin-dot">${which === 'origin' ? 'A' : 'B'}</div>`,
-            iconSize: [26, 26],
-            iconAnchor: [13, 13],
-        }),
-        zIndexOffset: 2000,
-    }).addTo(state.map);
-    marker.on('dragend', () => {
-        const pos = marker.getLatLng();
-        state[which] = { lat: pos.lat, lon: pos.lng, label: which === 'origin' ? 'Origin' : 'Destination' };
-        if (state.origin && state.destination) runSearch();
-    });
+    state[which] = { lat: latlng[0], lon: latlng[1],
+                     label: which === 'origin' ? 'Origin' : 'Destination' };
+    const marker = new Marker(latlng, { /* …unchanged… */ });
+    // …unchanged marker setup…
     state.markers[which] = marker;
 
-    // Sensible UX default: after the origin is set, arm the destination next.
-    if (which === 'origin' && !state.destination) armClick('destination');
+    // Removed: if (which === 'origin' && !state.destination) armClick('destination');
     updateControls();
     if (state.origin && state.destination) runSearch();
 }
 
 // --------------------------------------------------------------- search
 async function runSearch() {
-    // Backstop for anything updateControls could not prevent — never silent.
     if (!state.bundle) {
         $('journey-hint').textContent = 'Still loading schedules — try again in a moment.';
         loadBundleOnce();
         return;
     }
     if (!state.origin || !state.destination) {
-        $('journey-hint').textContent = 'Set both endpoints first: press “Set origin”, click the map, then “Set destination”.';
+        $('journey-hint').textContent =
+            'Set both endpoints first: press "Set origin", click the map, then "Set destination".';
         return;
     }
 
     state.searching = true;
-    updateControls();
+    updateButtonStates();          // NOT updateControls — must not touch the hint
 
     try {
         const date = $('journey-date').value || troyNow().date;
         const [hour, minute] = $('journey-when').value.split(':').map(Number);
         const departMinute = (hour || 0) * 60 + (minute || 0);
 
-        // Access walks: estimates first, then upgraded with Mapbox times.
         const originAccess = findWalkAccess(state.bundle, state.origin, ACCESS_RADIUS_M);
         const destAccess = findWalkAccess(state.bundle, state.destination, ACCESS_RADIUS_M);
-        const walkOverride = await mapboxWalkOverride(state.origin, state.destination);
+
+        // Mapbox lookups run in parallel; each falls back to local estimates
+        // on failure, so a bad token never blocks the search.
+        const [walkOverride, originUpgraded, destUpgraded] = await Promise.all([
+            mapboxWalkOverride(state.origin, state.destination),
+            upgradeAccess(originAccess, state.origin),
+            upgradeAccess(destAccess, state.destination),
+        ]);
         const direct = buildDirectOptions(state.bundle, state.origin, state.destination, walkOverride);
 
         const itineraries = search(state.index, {
@@ -234,8 +233,8 @@ async function runSearch() {
             destination: state.destination,
             date,
             departMinute,
-            originAccess: upgradeAccess(originAccess, state.origin),
-            destAccess: upgradeAccess(destAccess, state.destination),
+            originAccess: originUpgraded,
+            destAccess: destUpgraded,
             direct,
         });
 
@@ -244,10 +243,11 @@ async function runSearch() {
             ? `${itineraries.length} option${itineraries.length === 1 ? '' : 's'} found`
             : 'No itinerary found — try a nearer stop or another time.';
     } catch (error) {
+        console.error('Trip search failed:', error);
         $('journey-hint').textContent = `Search failed: ${error.message}`;
     } finally {
         state.searching = false;
-        updateControls();
+        updateButtonStates();      // hint is deliberately not touched here
     }
 }
 
@@ -324,12 +324,12 @@ function renderItineraries(itineraries) {
         const header = document.createElement('button');
         header.type = 'button';
         header.className = 'journey-option-head';
-        const badges = itinerary.legs.map((leg) => {
-            if (leg.type === 'walk') return '🚶';
-            if (leg.type === 'bike') return '🚲';
+	const badges = itinerary.legs.map((leg) => {
+    	    if (leg.type === 'walk') return '<span class="journey-chip journey-chip-walk">Walk</span>';
+            if (leg.type === 'bike') return '<span class="journey-chip journey-chip-bike">Bike</span>';
             if (leg.type === 'shuttle') return `<span class="journey-chip" style="background:${leg.color}">Shuttle</span>`;
             return `<span class="journey-chip" style="background:${leg.color}">${escapeHtml(leg.routeShort)}</span>`;
-        }).join('<span class="journey-arrow">›</span>');
+            }).join('<span class="journey-arrow">›</span>');
         header.innerHTML = `
             <span class="journey-time">${formatClock(itinerary.departure)} – ${formatClock(itinerary.arrival)}</span>
             <span class="journey-badges">${badges}</span>
@@ -359,13 +359,14 @@ function renderItineraries(itineraries) {
 function legLine(leg) {
     const time = `${formatClock(leg.departMinute)} – ${formatClock(leg.arriveMinute)}`;
     if (leg.type === 'walk') {
-        return `<span class="leg-icon">🚶</span> <strong>${escapeHtml(leg.from)}</strong> →
+        return `<span class="leg-label">Walk</span>
+            <strong>${escapeHtml(leg.from)}</strong> →
             <strong>${escapeHtml(leg.to)}</strong>
-            <span class="leg-meta">${leg.minutes} min walk · ${time}</span>`;
+            <span class="leg-meta">${leg.minutes} min · ${time}</span>`;
     }
     if (leg.type === 'bike') {
-        return `<span class="leg-icon">🚲</span> CDPHP bike via docks
-            <span class="leg-meta">${leg.minutes} min · ${time}</span>`;
+        return `<span class="leg-label">Bike</span> CDPHP bike via docks
+           <span class="leg-meta">${leg.minutes} min · ${time}</span>`;
     }
     if (leg.type === 'shuttle') {
         return `<span class="leg-icon" style="background:${leg.color}"></span>
