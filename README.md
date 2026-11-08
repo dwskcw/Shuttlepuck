@@ -7,8 +7,6 @@ Our idea is original in that nobody else has attempted to combine the routes and
 
 Another interesting angle is our navigation that combines modes of transportation. It's now easier for students, for example, to plan on taking the shuttle to a downtown bus stop. 
 
-We intend to provide an optional ridesharing feature for edge cases such as grocery trips or farther travel, especially to the airport or train station for holiday breaks. Users would be able to discuss fair prices beforehand, without the large cuts that ridesharing services usually take. This service would be explicitly limited to student drivers and riders.
-
 ## Running it
 
 ```bash
