@@ -1,25 +1,379 @@
 {
   "type": "FeatureCollection",
-  "generator": "overpass-turbo",
-  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-  "timestamp": "2026-11-07T20:13:08Z",
+  "generator": "merge_bikes.py",
   "features": [
     {
       "type": "Feature",
-      "id": "node/5038106365",
+      "id": "mapbox/0",
       "properties": {
-        "@id": "node/5038106365",
         "amenity": "bicycle_rental",
-        "capacity": "8",
-        "name": "State & Swan (SE)",
-        "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
+        "source": "mapbox"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.7598257,
-          42.6532191
+          -73.81967776351804,
+          42.74520265438487
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/1",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.69995497839447,
+          42.72548137016709
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/2",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.6761382180353,
+          42.77718557389841
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/3",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.82834778780888,
+          42.68964295360939
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/4",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.72919797842324,
+          42.686115826654586
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/5",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.69712694902259,
+          42.73183268098707
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/6",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.72679926336717,
+          42.695473442093544
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/7",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.64412446601045,
+          43.31071449285681
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/8",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.64622928692164,
+          43.30814184475772
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/9",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.70909201469668,
+          43.42021938413394
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/10",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.66387422156303,
+          43.335775802594085
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/11",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.81004671861312,
+          43.082887647634664
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/12",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7980547818202,
+          42.72890796196597
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/13",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.82623855662858,
+          43.060236005095675
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/14",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.70489157777277,
+          42.709342215859095
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/15",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.94581915255704,
+          42.808162300618875
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/16",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.78434917869193,
+          42.65279592477125
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/17",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.69411344712299,
+          42.726545877945526
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/18",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.78655559137066,
+          43.099988138569344
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/19",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.78475378530746,
+          43.097185515779536
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/20",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.68848938699186,
+          42.76650733595438
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/21",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.70057768749635,
+          42.77171074619317
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/22",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.70649924014201,
+          42.782399331015846
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/23",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -74.19599214538155,
+          42.934913425826565
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/24",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -74.2165702643756,
+          42.953686039700855
         ]
       }
     },
@@ -32,127 +386,60 @@
         "capacity": "6",
         "name": "Albany Medical Center",
         "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
+        "operator": "Social Bicycles Inc.",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/5038106369"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.773682,
-          42.6532349
+          -73.7736564928432,
+          42.65323458591841
         ]
       }
     },
     {
       "type": "Feature",
-      "id": "node/5038106384",
+      "id": "mapbox/26",
       "properties": {
-        "@id": "node/5038106384",
         "amenity": "bicycle_rental",
-        "capacity": "6",
-        "name": "Madison & Lark",
-        "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
+        "source": "mapbox"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.767572,
-          42.6524894
+          -73.71088691334981,
+          42.774690346836735
         ]
       }
     },
     {
       "type": "Feature",
-      "id": "node/5038106389",
+      "id": "mapbox/27",
       "properties": {
-        "@id": "node/5038106389",
         "amenity": "bicycle_rental",
-        "capacity": "9",
-        "name": "Empire State Plaza",
-        "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
+        "source": "mapbox"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.7620142,
-          42.649319
+          -73.76444177281888,
+          42.63190897410225
         ]
       }
     },
     {
       "type": "Feature",
-      "id": "node/5038106415",
+      "id": "mapbox/28",
       "properties": {
-        "@id": "node/5038106415",
         "amenity": "bicycle_rental",
-        "capacity": "12",
-        "name": "Washington Park - Madison & New Scotland",
-        "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
+        "source": "mapbox"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.7714142,
-          42.6552028
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "id": "node/5038106416",
-      "properties": {
-        "@id": "node/5038106416",
-        "amenity": "bicycle_rental",
-        "capacity": "7",
-        "name": "Lark & Spring",
-        "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.7655245,
-          42.6581509
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "id": "node/5038106419",
-      "properties": {
-        "@id": "node/5038106419",
-        "amenity": "bicycle_rental",
-        "capacity": "6",
-        "name": "Holland & Delaware",
-        "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.7716529,
-          42.6454983
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "id": "node/5038114626",
-      "properties": {
-        "@id": "node/5038114626",
-        "amenity": "bicycle_rental",
-        "capacity": "7",
-        "name": "The Point",
-        "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.7918533,
-          42.6663615
+          -73.75070561712569,
+          42.64819499894235
         ]
       }
     },
@@ -165,166 +452,107 @@
         "capacity": "5",
         "name": "Clinton & Lark",
         "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
+        "operator": "Social Bicycles Inc.",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/5038122387"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.7598981,
-          42.6598315
+          -73.75973009640745,
+          42.65969550829167
         ]
       }
     },
     {
       "type": "Feature",
-      "id": "node/5038122388",
+      "id": "mapbox/30",
       "properties": {
-        "@id": "node/5038122388",
         "amenity": "bicycle_rental",
-        "capacity": "7",
-        "name": "Maiden Lane Park",
-        "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
+        "source": "mapbox"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.7506825,
-          42.6501222
+          -73.79521017961208,
+          42.649017660081995
         ]
       }
     },
     {
       "type": "Feature",
-      "id": "node/5038122389",
+      "id": "mapbox/31",
       "properties": {
-        "@id": "node/5038122389",
         "amenity": "bicycle_rental",
-        "capacity": "6",
-        "name": "Ontario & Madosin",
-        "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
+        "source": "mapbox"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.7818307,
-          42.6606993
+          -73.75628292558642,
+          42.64612996689153
         ]
       }
     },
     {
       "type": "Feature",
-      "id": "node/5038122390",
+      "id": "mapbox/32",
       "properties": {
-        "@id": "node/5038122390",
         "amenity": "bicycle_rental",
-        "capacity": "10",
-        "name": "Hudson Riverway Park - Corning Preserve",
-        "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
+        "source": "mapbox"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.7430007,
-          42.6558075
+          -73.75411477628212,
+          42.64779093461349
         ]
       }
     },
     {
       "type": "Feature",
-      "id": "node/5038122391",
+      "id": "mapbox/33",
       "properties": {
-        "@id": "node/5038122391",
         "amenity": "bicycle_rental",
-        "capacity": "7",
-        "name": "Warehouse District",
-        "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
+        "source": "mapbox"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.7453989,
-          42.6607305
+          -73.77779526340753,
+          42.64250140620875
         ]
       }
     },
     {
       "type": "Feature",
-      "id": "node/5038122392",
+      "id": "node/13067760650",
       "properties": {
-        "@id": "node/5038122392",
+        "@id": "node/13067760650",
         "amenity": "bicycle_rental",
-        "bicycle_rental": "docking_station",
-        "capacity": "7",
-        "name": "State & Eagle (SE)",
-        "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/13067760650"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.7553893,
-          42.6510056
+          -73.76817050651992,
+          42.651031192106075
         ]
       }
     },
     {
       "type": "Feature",
-      "id": "node/5038122393",
+      "id": "mapbox/35",
       "properties": {
-        "@id": "node/5038122393",
         "amenity": "bicycle_rental",
-        "capacity": "5",
-        "name": "Western & North Lake",
-        "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
+        "source": "mapbox"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.7739743,
-          42.6609795
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "id": "node/5038122394",
-      "properties": {
-        "@id": "node/5038122394",
-        "amenity": "bicycle_rental",
-        "capacity": "7",
-        "name": "Palace Theater - Clinton & North Pearl",
-        "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.7502319,
-          42.6541129
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "id": "node/5038122395",
-      "properties": {
-        "@id": "node/5038122395",
-        "amenity": "bicycle_rental",
-        "capacity": "7",
-        "name": "Lark & Spring",
-        "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.7637417,
-          42.6562097
+          -73.77184040733705,
+          42.655089427335284
         ]
       }
     },
@@ -337,13 +565,299 @@
         "capacity": "6",
         "name": "Swinburne Park - Clinton & Ontario",
         "network": "CDPHP Cycle",
-        "operator": "Social Bicycles Inc."
+        "operator": "Social Bicycles Inc.",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/5038122396"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.77392,
-          42.6681975
+          -73.77384780045753,
+          42.66815707690439
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038106384",
+      "properties": {
+        "@id": "node/5038106384",
+        "amenity": "bicycle_rental",
+        "capacity": "6",
+        "name": "Madison & Lark",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc.",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/5038106384"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.76748184901248,
+          42.65254636832971
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/38",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.74978581128929,
+          42.65395120730733
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038122391",
+      "properties": {
+        "@id": "node/5038122391",
+        "amenity": "bicycle_rental",
+        "capacity": "7",
+        "name": "Warehouse District",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc.",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/5038122391"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7453147865624,
+          42.66079936004158
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/40",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.74518105162078,
+          42.65307111739082
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038114626",
+      "properties": {
+        "@id": "node/5038114626",
+        "amenity": "bicycle_rental",
+        "capacity": "7",
+        "name": "The Point",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc.",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/5038114626"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.79176698860971,
+          42.66636357046184
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/42",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.77320593050715,
+          42.665733165075864
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/43",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.77365237036263,
+          42.6607876981797
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038122388",
+      "properties": {
+        "@id": "node/5038122388",
+        "amenity": "bicycle_rental",
+        "capacity": "7",
+        "name": "Maiden Lane Park",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc.",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/5038122388"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.75066694630219,
+          42.64998579121246
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/12249028443",
+      "properties": {
+        "@id": "node/12249028443",
+        "amenity": "bicycle_rental",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/12249028443"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.78109372310311,
+          42.678561408752024
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/46",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.75824825148301,
+          42.641244131017665
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/47",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.76762096694196,
+          42.66783639519246
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038106416",
+      "properties": {
+        "@id": "node/5038106416",
+        "amenity": "bicycle_rental",
+        "capacity": "7",
+        "name": "Lark & Spring",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc.",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/5038106416"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.76564077556979,
+          42.6582021306949
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038106419",
+      "properties": {
+        "@id": "node/5038106419",
+        "amenity": "bicycle_rental",
+        "capacity": "6",
+        "name": "Holland & Delaware",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc.",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/5038106419"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.77180834708044,
+          42.64554028359565
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/50",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.8059470454026,
+          42.64895256137606
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/51",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.79073221034281,
+          42.65788872926436
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038122389",
+      "properties": {
+        "@id": "node/5038122389",
+        "amenity": "bicycle_rental",
+        "capacity": "6",
+        "name": "Ontario & Madosin",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc.",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/5038122389"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.78176800234179,
+          42.66090180342946
         ]
       }
     },
@@ -357,28 +871,492 @@
         "capacity": "5",
         "fee": "yes",
         "network": "CDPHP Cycle",
-        "website": "https://www.cdphpcycle.com/"
+        "website": "https://www.cdphpcycle.com/",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/8332828350"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.7670925,
-          42.6274204
+          -73.7673511906335,
+          42.627300641497236
         ]
       }
     },
     {
       "type": "Feature",
-      "id": "node/10138106356",
+      "id": "mapbox/54",
       "properties": {
-        "@id": "node/10138106356",
-        "amenity": "bicycle_rental"
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.7681079,
-          42.6511397
+          -73.80781054071441,
+          42.66539482858044
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/55",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.76238812997278,
+          42.656417420295
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/56",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.77755340594157,
+          42.65237048657002
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/57",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.73855711734844,
+          42.67408161501603
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038106365",
+      "properties": {
+        "@id": "node/5038106365",
+        "amenity": "bicycle_rental",
+        "capacity": "8",
+        "name": "State & Swan (SE)",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc.",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/5038106365"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.76001167316642,
+          42.65317980099568
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038106389",
+      "properties": {
+        "@id": "node/5038106389",
+        "amenity": "bicycle_rental",
+        "capacity": "9",
+        "name": "Empire State Plaza",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc.",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/5038106389"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.76205646391547,
+          42.649295292132614
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/60",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.78007058014919,
+          42.67984626919912
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/61",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7825022176808,
+          43.08385668096552
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/62",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.77435391914416,
+          43.07201056921645
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/63",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.789872753161,
+          43.06487130433645
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/64",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.76959424426197,
+          43.081776339227154
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/65",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.79856613354761,
+          43.0672816817374
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/66",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.78590537689209,
+          43.081617872168295
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/67",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.78358980412416,
+          43.081996714552275
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/68",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.80122282465254,
+          43.05569514863299
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/69",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.79215881511755,
+          43.07594614281572
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/70",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.77108264513933,
+          43.090417073786874
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/71",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.78610175016313,
+          43.0786416641529
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/72",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.94825755960882,
+          42.79990381029336
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/73",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.79843360851086,
+          43.08583295271766
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/74",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.93366012545656,
+          42.82403618188012
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/75",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.93701019675737,
+          42.80655756444629
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/76",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.90294212344175,
+          42.804245453572776
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/77",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.94159865189363,
+          42.81273361547315
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/78",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.94246082413905,
+          42.816337497962216
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/79",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.94725946537449,
+          42.81953311494431
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/80",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.94907804062163,
+          42.81522343658659
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/81",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.9384870453755,
+          42.81456602532203
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/82",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.93775723345645,
+          42.812666467264556
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/83",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.9339501189948,
+          42.819324926796554
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/84",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.93321062344728,
+          42.81529095282695
         ]
       }
     },
@@ -387,59 +1365,75 @@
       "id": "node/11090573704",
       "properties": {
         "@id": "node/11090573704",
-        "amenity": "bicycle_rental"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.6828362,
-          42.7472742
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "id": "node/12249028443",
-      "properties": {
-        "@id": "node/12249028443",
-        "amenity": "bicycle_rental"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.7811514,
-          42.6783988
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "id": "node/13067760650",
-      "properties": {
-        "@id": "node/13067760650",
-        "amenity": "bicycle_rental"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.7681899,
-          42.6510534
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "id": "node/13148691754",
-      "properties": {
-        "@id": "node/13148691754",
         "amenity": "bicycle_rental",
-        "network": "CDPHP"
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/11090573704"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.6871992,
-          42.7282238
+          -73.68283472114031,
+          42.747313997294256
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/86",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.69305469708378,
+          42.72304901235002
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/87",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.6933246367813,
+          42.71494200766259
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/88",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.6771510755565,
+          42.73051263319552
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/89",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.67619222746708,
+          42.73392132997537
         ]
       }
     },
@@ -450,29 +1444,265 @@
         "@id": "node/13530265857",
         "amenity": "bicycle_rental",
         "bicycle_rental": "docking_station",
-        "operator": "CDPHP Cycle!"
+        "operator": "CDPHP Cycle!",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/13530265857"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.6902905,
-          42.7252184
+          -73.69021462134309,
+          42.72538340246324
         ]
       }
     },
     {
       "type": "Feature",
-      "id": "node/14066549124",
+      "id": "mapbox/91",
       "properties": {
-        "@id": "node/14066549124",
         "amenity": "bicycle_rental",
-        "network": "CDPHP Cycle"
+        "source": "mapbox"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.6856812,
-          42.7398498
+          -73.68548891357888,
+          42.74066540904628
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/13148691754",
+      "properties": {
+        "@id": "node/13148691754",
+        "amenity": "bicycle_rental",
+        "network": "CDPHP",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/13148691754"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.68720029181097,
+          42.728175480366254
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/93",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.69091302156447,
+          42.728638143947826
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/94",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.6868982111738,
+          42.73719890794895
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/95",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.68116942995968,
+          42.75210537098235
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/96",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.68750036508274,
+          42.731378845781606
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/97",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.69221230835853,
+          42.73171971913511
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/98",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.82297038899064,
+          42.68807434314394
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/99",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.826183753828,
+          42.685272427841035
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038122392",
+      "properties": {
+        "@id": "node/5038122392",
+        "amenity": "bicycle_rental",
+        "bicycle_rental": "docking_station",
+        "capacity": "7",
+        "name": "State & Eagle (SE)",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc.",
+        "source": "osm+mapbox",
+        "matched_osm_id": "node/5038122392"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.75538058024776,
+          42.6510046230405
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/101",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.71634315337322,
+          42.78680124201617
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/102",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.91556302745474,
+          42.821669289002934
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/103",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.68455888928048,
+          42.772138862241874
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/104",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.66245129804162,
+          43.3220066178368
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/105",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.77037883862396,
+          43.075420488410224
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mapbox/106",
+      "properties": {
+        "amenity": "bicycle_rental",
+        "source": "mapbox"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7746835098339,
+          43.062144266098606
         ]
       }
     }
