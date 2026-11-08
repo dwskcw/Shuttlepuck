@@ -895,14 +895,14 @@ function renderRouteTree() {
             button.className = 'route-tree-disclosure';
             const isOpen = expandedRouteGroups.get(node.id) ?? node.open;
             children.hidden = !isOpen;
-            button.textContent = isOpen ? '▾' : '▸';
+            button.textContent = isOpen ? '-' : '+';
             button.setAttribute('aria-expanded', String(isOpen));
             button.setAttribute('aria-label', `Expand or collapse ${node.label}`);
             button.addEventListener('click', () => {
                 children.hidden = !children.hidden;
                 const expanded = !children.hidden;
                 expandedRouteGroups.set(node.id, expanded);
-                button.textContent = expanded ? '▾' : '▸';
+                button.textContent = expanded ? '-' : '+';
                 button.setAttribute('aria-expanded', String(expanded));
             });
             row.append(button);

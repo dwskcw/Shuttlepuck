@@ -189,8 +189,8 @@ function updateButtonStates() {
     const destBtn = $('journey-set-destination');
     const searchBtn = $('journey-search');
 
-    originBtn.textContent = state.origin ? '✓ Origin set' : '1. Set origin';
-    destBtn.textContent = state.destination ? '✓ Destination set' : '2. Set destination';
+    originBtn.textContent = state.origin ? 'Origin set' : '1. Set origin';
+    destBtn.textContent = state.destination ? 'Destination set' : '2. Set destination';
     originBtn.classList.toggle('set', Boolean(state.origin));
     destBtn.classList.toggle('set', Boolean(state.destination));
     originBtn.classList.toggle('armed', state.armed === 'origin');
@@ -472,7 +472,7 @@ function renderItineraries(itineraries) {
             if (leg.type === 'bike') return '<span class="journey-chip journey-chip-bike">Bike</span>';
             if (leg.type === 'shuttle') return `<span class="journey-chip" style="background:${leg.color}">Shuttle</span>`;
             return `<span class="journey-chip" style="background:${leg.color}">${escapeHtml(leg.routeShort)}</span>`;
-            }).join('<span class="journey-arrow">›</span>');
+            }).join('<span class="journey-arrow">&gt;</span>');
         header.innerHTML = `
             <span class="journey-time">${formatClock(itinerary.departure)} – ${formatClock(itinerary.arrival)}</span>
             <span class="journey-badges">${badges}</span>
@@ -521,7 +521,7 @@ function legLine(leg) {
     const time = `${formatClock(leg.departMinute)} – ${formatClock(leg.arriveMinute)}`;
     if (leg.type === 'walk') {
         return `<span class="leg-label">Walk</span>
-            <strong>${escapeHtml(leg.from)}</strong> →
+            <strong>${escapeHtml(leg.from)}</strong> to
             <strong>${escapeHtml(leg.to)}</strong>
             <span class="leg-meta">${leg.minutes} min · ${time}</span>`;
     }
@@ -532,11 +532,11 @@ function legLine(leg) {
     if (leg.type === 'shuttle') {
         return `<span class="leg-icon" style="background:${leg.color}"></span>
             <strong>${escapeHtml(leg.routeName)}</strong> toward campus loop
-            <span class="leg-meta">${escapeHtml(String(leg.from))} → ${escapeHtml(String(leg.to))} · ${time}</span>`;
+            <span class="leg-meta">${escapeHtml(String(leg.from))} to ${escapeHtml(String(leg.to))} · ${time}</span>`;
     }
     return `<span class="leg-icon" style="background:${leg.color}"></span>
         <strong>CDTA ${escapeHtml(leg.routeShort)}</strong> to ${escapeHtml(leg.headsign ?? '')}
-        <span class="leg-meta">${escapeHtml(String(leg.from))} → ${escapeHtml(String(leg.to))} · ${time}</span>`;
+        <span class="leg-meta">${escapeHtml(String(leg.from))} to ${escapeHtml(String(leg.to))} · ${time}</span>`;
 }
 
 // --------------------------------------------------------------- map drawing
