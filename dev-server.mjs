@@ -19,9 +19,9 @@ const client = UPSTREAM.protocol === 'https:' ? https : http;
 
 // Only these static files are served. No arbitrary filesystem paths are exposed.
 const staticContentTypes = new Map([
-    ['/shubble-map.html', 'text/html; charset=utf-8'],
-    ['/shubble-map.css', 'text/css; charset=utf-8'],
-    ['/shubble-map.js', 'text/javascript; charset=utf-8'],
+    ['/map.html', 'text/html; charset=utf-8'],
+    ['/map.css', 'text/css; charset=utf-8'],
+    ['/map.js', 'text/javascript; charset=utf-8'],
     ['/cdta-transit.json', 'application/json; charset=utf-8'],
     ['/cdta-departures.json', 'application/json; charset=utf-8']
 ]);
