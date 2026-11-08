@@ -125,6 +125,36 @@ test('chains shuttle -> footpath -> bus with wait time', () => {
     assert.equal(chained.transfers, 1);
 });
 
+test('combines consecutive access and footpath walks into one leg', () => {
+    const bundle = syntheticBundle();
+    bundle.footpaths.push(
+        { from: 'shuttle:A0', to: 'cdta:0', minutes: 3 },
+        { from: 'cdta:0', to: 'shuttle:A1', minutes: 4 },
+    );
+    const origin = { lat: 0, lon: 0, label: 'Origin' };
+    const destination = { lat: 0, lon: 0.0018, label: 'Destination' };
+    const itineraries = run(bundle, {
+        origin,
+        destination,
+        date: WEEKDAY,
+        departMinute: 9 * 60,
+        originAccess: [{ nodeKey: 'shuttle:A0', minutes: 2 }],
+        destAccess: [{ nodeKey: 'shuttle:A1', minutes: 5 }],
+        direct: {},
+        modes: { shuttle: false, bus: false },
+    });
+
+    const itinerary = itineraries[0];
+    assert.ok(itinerary, 'expected a walking itinerary');
+    assert.equal(itinerary.legs.length, 1);
+    assert.deepEqual(
+        [itinerary.legs[0].from, itinerary.legs[0].to, itinerary.legs[0].minutes],
+        ['Origin', 'Destination', 12],
+    );
+    assert.equal(itinerary.legs[0].departMinute, 9 * 60);
+    assert.equal(itinerary.legs[0].arriveMinute, 9 * 60 + 12);
+});
+
 test('missed connection waits for the next scheduled trip', () => {
     const bundle = syntheticBundle();
     // Leave later so only the 11:15 bus is catchable: arrive C0 at 11:07.

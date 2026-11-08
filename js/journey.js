@@ -480,7 +480,22 @@ function reconstruct(index, roundResult, parents, {
             toPoint: { lat: destination.lat, lon: destination.lon },
         });
     }
-    return legs;
+
+    const mergedLegs = [];
+    for (const leg of legs) {
+        const previous = mergedLegs.at(-1);
+        if (previous?.type === 'walk'
+            && leg.type === 'walk'
+            && previous.arriveMinute === leg.departMinute) {
+            previous.to = leg.to;
+            previous.minutes += leg.minutes;
+            previous.arriveMinute = leg.arriveMinute;
+            previous.toPoint = leg.toPoint;
+        } else {
+            mergedLegs.push(leg);
+        }
+    }
+    return mergedLegs;
 }
 
 // Build one transit leg descriptor from a ride via pointer.

@@ -482,7 +482,6 @@ function renderItineraries(itineraries) {
             }).join('<span class="journey-arrow">&gt;</span>');
         header.innerHTML = `
             <span class="journey-time">${formatClock(itinerary.departure)} – ${formatClock(itinerary.arrival)}</span>
-            <span class="journey-badges">${badges}</span>
             <span class="journey-total">${formatClock(itinerary.departure)} departure</span>`;
         header.addEventListener('click', () => {
             selectItineraryOverlays(itinerary);
@@ -528,7 +527,7 @@ function legLine(leg) {
     const time = `${formatClock(leg.departMinute)} – ${formatClock(leg.arriveMinute)}`;
     if (leg.type === 'walk') {
         return `<span class="leg-label">Walk</span>
-            <strong>${escapeHtml(leg.from)}</strong> to
+            <strong>${escapeHtml(leg.from)}</strong> to <strong>${escapeHtml(leg.to)}</strong>
             <span class="leg-meta">${leg.minutes} min walk · ${time}</span>`;
     }
     if (leg.type === 'bike') {
