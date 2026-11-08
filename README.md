@@ -17,7 +17,7 @@ node dev-server.mjs                  # then open http://localhost:3001/
 
 ## Trip planner (multimodal navigation)
 
-The 🧭 Directions button on the map opens the planner:
+The Directions button on the map opens the planner:
 
 1. Click **Set origin**, then click the map; repeat for **Set destination** (markers are draggable).
 2. Optionally change the departure time (defaults to now, Troy time).
