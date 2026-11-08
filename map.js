@@ -816,6 +816,26 @@ function applyRouteSelection() {
     syncRouteTreeCheckboxes();
 }
 
+function selectItineraryOverlays(event) {
+    const shuttleRoutes = new Set(event.detail?.shuttleRoutes ?? []);
+    const cdtaShorts = new Set(event.detail?.cdtaRoutes ?? []);
+
+    for (const key of selectedShuttleRoutes) {
+        if (!shuttleRoutes.has(key)) selectedShuttleRoutes.delete(key);
+    }
+    for (const key of shuttleRoutes) selectedShuttleRoutes.add(key);
+
+    selectedCdtaRoutes.clear();
+    if (cdtaTransit) {
+        cdtaTransit.routes.forEach((route, index) => {
+            if (cdtaShorts.has(route.short)) selectedCdtaRoutes.add(index);
+        });
+    }
+
+    bikeLocationsEnabled = false;
+    applyRouteSelection();
+}
+
 function renderRouteTree() {
     routeTreeNodes = createRouteTreeModel();
     routeTreeContainer.replaceChildren();
@@ -902,6 +922,8 @@ cdtaDateInput.addEventListener('change', () => {
         );
     }
 });
+
+window.addEventListener('journey:select', selectItineraryOverlays);
 map.on('moveend zoomend', cdtaDrawStops);
 renderRouteTree();
 initJourneyUi({ map, apiBase: API_BASE, mapboxToken: MAPBOX_TOKEN });

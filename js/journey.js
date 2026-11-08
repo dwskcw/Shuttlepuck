@@ -109,7 +109,21 @@ export function findWalkAccess(bundle, point, maxMeters) {
 // Direct (no transit) options between two points: a plain walk and/or a
 // dock-to-dock CDPHP bike ride. `walkOverride` lets the UI inject a
 // Mapbox-measured walk {minutes, meters} instead of the estimate.
-export function buildDirectOptions(bundle, origin, destination, walkOverride) {
+export function findNearestBikeDocks(bundle, origin, destination) {
+    const nearestDock = (point) => {
+        let best = null;
+        for (const [index, dock] of bundle.docks.entries()) {
+            const meters = haversineMeters(point, [dock.lat, dock.lon]);
+            if (meters <= DOCK_ACCESS_M && (!best || meters < best.meters)) {
+                best = { index, meters };
+            }
+        }
+        return best;
+    };
+    return { origin: nearestDock(origin), destination: nearestDock(destination) };
+}
+
+export function buildDirectOptions(bundle, origin, destination, walkOverride, bikeAccess) {
     const options = {};
 
     const straightM = haversineMeters(origin, destination);
@@ -123,31 +137,28 @@ export function buildDirectOptions(bundle, origin, destination, walkOverride) {
     }
 
     // Bike: walk to nearest dock, ride to dock nearest the destination, walk on.
-    const nearestDock = (point) => {
-        let best = null;
-        for (const [i, dock] of bundle.docks.entries()) {
-            const meters = haversineMeters(point, [dock.lat, dock.lon]);
-            if (meters <= DOCK_ACCESS_M && (!best || meters < best.meters)) {
-                best = { index: i, meters };
-            }
-        }
-        return best;
-    };
-    const dockA = nearestDock(origin);
-    const dockB = nearestDock(destination);
+    const { origin: dockA, destination: dockB } = findNearestBikeDocks(bundle, origin, destination);
     if (dockA && dockB) {
         const dockAxy = bundle.docks[dockA.index];
         const dockBxy = bundle.docks[dockB.index];
         const rideMeters = haversineMeters([dockAxy.lat, dockAxy.lon], [dockBxy.lat, dockBxy.lon]);
-        const minutes = Math.max(1, Math.round(dockA.meters / WALK_M_PER_MIN)) + 1 +
+        const originWalk = bikeAccess?.origin ?? {
+            meters: dockA.meters,
+            minutes: Math.max(1, Math.round(dockA.meters * STREET_FACTOR / WALK_M_PER_MIN)),
+        };
+        const destinationWalk = bikeAccess?.destination ?? {
+            meters: dockB.meters,
+            minutes: Math.max(1, Math.round(dockB.meters * STREET_FACTOR / WALK_M_PER_MIN)),
+        };
+        const minutes = originWalk.minutes + 1 +
             Math.max(1, Math.round(rideMeters / BIKE_M_PER_MIN)) + 1 +
-            Math.max(1, Math.round(dockB.meters / WALK_M_PER_MIN));
+            destinationWalk.minutes;
         // A bike that is slower than walking is noise, not an option.
         if (!options.walk || minutes < options.walk.minutes) {
             options.bike = {
                 mode: 'bike',
                 minutes,
-                meters: Math.round(dockA.meters + rideMeters + dockB.meters),
+                meters: Math.round(originWalk.meters + rideMeters + destinationWalk.meters),
                 docks: [dockA.index, dockB.index],
             };
         }
@@ -456,6 +467,8 @@ function reconstruct(index, roundResult, parents, { origin, destination, departM
 
 // Build one transit leg descriptor from a ride via pointer.
 function rideLeg(index, via) {
+    const from = index.nodes.get(via.fromNode)?.label ?? via.fromNode;
+    const to = index.nodes.get(via.toNode)?.label ?? via.toNode;
     if (via.kind === 'shuttle') {
         const route = index.bundle.shuttle.routes[via.route];
         return {
@@ -464,6 +477,8 @@ function rideLeg(index, via) {
             routeName: route?.name ?? via.route,
             color: route?.color ?? '#c04040',
             headsign: route?.name ?? via.route,
+            from,
+            to,
             fromNode: via.fromNode,
             toNode: via.toNode,
             departMinute: via.departMinute,
@@ -478,6 +493,8 @@ function rideLeg(index, via) {
         routeName: route.name,
         color: `#${route.color}`,
         headsign: pattern.headsign,
+        from,
+        to,
         fromNode: via.fromNode,
         toNode: via.toNode,
         departMinute: via.departMinute,

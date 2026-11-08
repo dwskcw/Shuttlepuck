@@ -13,7 +13,9 @@
 import {
     LayerGroup, Marker, DivIcon, Polyline, CircleMarker,
 } from 'leaflet';
-import { buildIndex, search, findWalkAccess, buildDirectOptions } from './journey.js';
+import {
+    buildIndex, search, findWalkAccess, buildDirectOptions, findNearestBikeDocks,
+} from './journey.js';
 import { troyNow, formatClock } from './time.js';
 
 const ACCESS_CANDIDATES = 8;   // stops upgraded with real Mapbox walk times
@@ -22,6 +24,7 @@ const ACCESS_DEFAULT_MIN = 1;  // fallback walk minutes when Mapbox is unavailab
 const BUNDLE_TIMEOUT_MS = 15_000; // schedule bundle fetch deadline
 const MAPBOX_PROFILE = 'mapbox/walking';
 const MAPBOX_TRANSIT_PROFILE = 'mapbox/driving';
+const MAPBOX_CYCLING_PROFILE = 'mapbox/cycling';
 
 // --------------------------------------------------------------- state
 const state = {
@@ -210,6 +213,10 @@ function onMapClick(event) {
 }
 
 function setEndpoint(which, latlng) {
+    if (state.markers[which]) {
+        state.map.removeLayer(state.markers[which]);
+        state.markers[which] = null;
+    }
     state[which] = { lat: latlng[0], lon: latlng[1], label: which === 'origin' ? 'Origin' : 'Destination' };
     const marker = new Marker(latlng, {
         draggable: true,
@@ -259,7 +266,15 @@ async function runSearch() {
         const originAccess = findWalkAccess(state.bundle, state.origin, ACCESS_RADIUS_M);
         const destAccess = findWalkAccess(state.bundle, state.destination, ACCESS_RADIUS_M);
         const walkOverride = await mapboxWalkOverride(state.origin, state.destination);
-        const direct = buildDirectOptions(state.bundle, state.origin, state.destination, walkOverride);
+        const bikeAccess = await mapboxBikeAccess(state.origin, state.destination);
+        const direct = buildDirectOptions(
+            state.bundle, state.origin, state.destination, walkOverride, bikeAccess,
+        );
+        if (direct.bike) {
+            direct.bike.geometry = await mapboxBikeGeometry(
+                state.origin, state.destination, direct.bike.docks,
+            );
+        }
         const [upgradedOriginAccess, upgradedDestAccess] = await Promise.all([
             upgradeAccess(originAccess, state.origin),
             upgradeAccess(destAccess, state.destination),
@@ -308,6 +323,79 @@ async function mapboxWalkOverride(origin, destination) {
     } catch {
         return undefined;
     }
+
+}
+
+async function mapboxBikeAccess(origin, destination) {
+    const docks = findNearestBikeDocks(state.bundle, origin, destination);
+    if (!docks.origin || !docks.destination || !state.mapboxToken) return undefined;
+    const originDock = state.bundle.docks[docks.origin.index];
+    const destinationDock = state.bundle.docks[docks.destination.index];
+    const [toOriginDock, fromDestinationDock] = await Promise.all([
+        fetchMapboxRoute(origin, originDock),
+        fetchMapboxRoute(destinationDock, destination),
+    ]);
+    if (!toOriginDock || !fromDestinationDock) return undefined;
+    return {
+        origin: {minutes: toOriginDock.minutes, meters: toOriginDock.meters},
+        destination: {minutes: fromDestinationDock.minutes, meters: fromDestinationDock.meters},
+    };
+}
+
+async function fetchMapboxRoute(from, to) {
+    try {
+        const coords = `${from.lon},${from.lat};${to.lon},${to.lat}`;
+        const url = `https://api.mapbox.com/directions/v5/${MAPBOX_PROFILE}/${coords}` +
+            `?overview=false&access_token=${encodeURIComponent(state.mapboxToken)}`;
+        const response = await fetch(url);
+        if (!response.ok) return undefined;
+        const route = (await response.json()).routes?.[0];
+        if (!route || !Number.isFinite(route.duration) || !Number.isFinite(route.distance)) {
+            return undefined;
+        }
+
+        return {
+            minutes: Math.max(1, Math.round(route.duration / 60)),
+            meters: Math.round(route.distance),
+        };
+    } catch {
+        return undefined;
+    }
+}
+
+async function fetchMapboxGeometry(from, to, profile, waypoint) {
+    try {
+        const routePoints = [from, waypoint, to].filter(Boolean);
+        const coords = routePoints.map((point) => `${point.lon},${point.lat}`).join(';');
+        const url = `https://api.mapbox.com/directions/v5/${profile}/${coords}` +
+            `?geometries=geojson&overview=full&access_token=${encodeURIComponent(state.mapboxToken)}`;
+        const response = await fetch(url);
+        if (!response.ok) return undefined;
+        const route = (await response.json()).routes?.[0];
+        const geometryPoints = route?.geometry?.coordinates;
+        if (!Array.isArray(geometryPoints) || geometryPoints.length < 2) return undefined;
+        return geometryPoints
+            .filter(([lon, lat]) => Number.isFinite(lon) && Number.isFinite(lat))
+            .map(([lon, lat]) => [lat, lon]);
+    } catch {
+        return undefined;
+    }
+}
+
+async function mapboxBikeGeometry(origin, destination, docks) {
+    const [originDockIndex, destinationDockIndex] = docks;
+    const originDock = state.bundle.docks[originDockIndex];
+    const destinationDock = state.bundle.docks[destinationDockIndex];
+    if (!originDock || !destinationDock) return undefined;
+
+    const segments = await Promise.all([
+        fetchMapboxGeometry(origin, originDock, MAPBOX_PROFILE),
+        fetchMapboxGeometry(originDock, destinationDock, MAPBOX_CYCLING_PROFILE),
+        fetchMapboxGeometry(destinationDock, destination, MAPBOX_PROFILE),
+    ]);
+    if (segments.some((segment) => !segment || segment.length < 2)) return undefined;
+    return segments.flatMap((segment, index) =>
+        index === 0 ? segment : segment.slice(1));
 }
 
 // Replace estimated walk minutes for the nearest stops with real Mapbox
@@ -370,6 +458,7 @@ function renderItineraries(itineraries) {
             <span class="journey-badges">${badges}</span>
             <span class="journey-total">${formatClock(itinerary.departure)} departure</span>`;
         header.addEventListener('click', () => {
+            selectItineraryOverlays(itinerary);
             drawItinerary(itinerary);
             for (const sibling of list.children) sibling.classList.remove('selected');
             card.classList.add('selected');
@@ -388,7 +477,24 @@ function renderItineraries(itineraries) {
         list.append(card);
     });
 
-    if (itineraries.length > 0) drawItinerary(itineraries[0]);
+    if (itineraries.length > 0) {
+        selectItineraryOverlays(itineraries[0]);
+        drawItinerary(itineraries[0]);
+        list.firstElementChild?.classList.add('selected');
+    }
+}
+
+function selectItineraryOverlays(itinerary) {
+    window.dispatchEvent(new CustomEvent('journey:select', {
+        detail: {
+            shuttleRoutes: [...new Set(itinerary.legs
+                .filter((leg) => leg.type === 'shuttle' && leg.route)
+                .map((leg) => leg.route))],
+            cdtaRoutes: [...new Set(itinerary.legs
+                .filter((leg) => leg.type === 'bus' && leg.routeShort)
+                .map((leg) => leg.routeShort))],
+        },
+    }));
 }
 
 function legLine(leg) {
@@ -434,10 +540,13 @@ async function drawItinerary(itinerary) {
                 : endpointCoords(leg.to);
             const geometry = leg.geometry ?? walkGeometries[walkLegs.indexOf(leg)];
             if (from && to) {
-                new Polyline(geometry ?? [from, to], {
+                const walkingLine = new Polyline(geometry ?? [from, to], {
                     color: leg.type === 'bike' ? '#1a9641' : '#555555',
                     weight: 3, dashArray: '2 8', opacity: 0.9,
                 }).addTo(state.resultLayers);
+                if (leg.type === 'walk') {
+                    addWalkingPathHandle(walkingLine, leg, geometry ?? [from, to]);
+                }
                 bounds.push(from, to);
             }
             continue;
@@ -458,6 +567,7 @@ async function drawItinerary(itinerary) {
         }
         const from = nodeCoords(state.bundle, leg.fromNode);
         const to = nodeCoords(state.bundle, leg.toNode);
+        if (!from || !to) continue;
         bounds.push([from.lat, from.lon], [to.lat, to.lon]);
         for (const [coords, kind] of [[from, 'board'], [to, 'alight']]) {
             new CircleMarker([coords.lat, coords.lon], {
@@ -485,6 +595,51 @@ async function drawItinerary(itinerary) {
         return fetchMapboxGeometry(from, to, MAPBOX_PROFILE);
     }
 
+    function addWalkingPathHandle(line, leg, geometry) {
+        if (geometry.length < 2) return;
+        const midpoint = geometry[Math.floor(geometry.length / 2)];
+        const handle = new Marker(midpoint, {
+            draggable: true,
+            opacity: 0,
+            icon: new DivIcon({
+                className: 'journey-walk-handle',
+                html: '<div></div>',
+                iconSize: [18, 18],
+                iconAnchor: [9, 9],
+            }),
+        }).addTo(state.resultLayers);
+        let hideTimer = null;
+        const showHandle = () => {
+            clearTimeout(hideTimer);
+            handle.setOpacity(1);
+        };
+        const hideHandle = () => {
+            hideTimer = setTimeout(() => {
+                if (!handle.dragging?._dragging) handle.setOpacity(0);
+            }, 250);
+        };
+        line.on('mouseover', showHandle);
+        line.on('mouseout', hideHandle);
+        handle.on('mouseover', showHandle);
+        handle.on('mouseout', hideHandle);
+        handle.on('dragstart', showHandle);
+        handle.on('dragend', async () => {
+            showHandle();
+            const point = handle.getLatLng();
+            const from = leg.fromPoint;
+            const to = leg.toPoint;
+            const routed = await fetchMapboxGeometry(
+                from, to, MAPBOX_PROFILE, { lat: point.lat, lon: point.lng },
+            );
+            if (routed?.length > 1) {
+                line.setLatLngs(routed);
+                handle.setLatLng(routed[Math.floor(routed.length / 2)]);
+            } else {
+                handle.setLatLng(point);
+            }
+        });
+    }
+
     async function getTransitGeometry(leg) {
         if (leg.type === 'shuttle') return transitLegGeometry(state.bundle, leg);
         const from = nodeCoords(state.bundle, leg.fromNode);
@@ -497,24 +652,6 @@ async function drawItinerary(itinerary) {
         const geometry = await request;
         state.transitRoutes.set(key, geometry);
         return geometry;
-    }
-
-    async function fetchMapboxGeometry(from, to, profile) {
-        try {
-            const coords = `${from.lon},${from.lat};${to.lon},${to.lat}`;
-            const url = `https://api.mapbox.com/directions/v5/${profile}/${coords}` +
-                `?geometries=geojson&overview=full&access_token=${encodeURIComponent(state.mapboxToken)}`;
-            const response = await fetch(url);
-            if (!response.ok) return undefined;
-            const route = (await response.json()).routes?.[0];
-            const points = route?.geometry?.coordinates;
-            if (!Array.isArray(points) || points.length < 2) return undefined;
-            return points
-                .filter(([lon, lat]) => Number.isFinite(lon) && Number.isFinite(lat))
-                .map(([lon, lat]) => [lat, lon]);
-        } catch {
-            return undefined;
-        }
     }
 
     if (bounds.length > 0) {

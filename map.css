@@ -231,3 +231,77 @@ html, body { height: 100%; margin: 0; }
 .journey-pin-destination .journey-pin-dot { background: #16a34a; }
 .journey-pin-dot > * { transform: rotate(45deg); }
 .journey-pin-dot { font-size: 0; } /* letter hidden; shape + color carry meaning */
+.journey-walk-handle {
+    background: transparent;
+    border: 0;
+}
+.journey-walk-handle > div {
+    width: 14px;
+    height: 14px;
+    margin: 2px;
+    box-sizing: border-box;
+    border: 2px solid #2563eb;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
+}
+
+/* Keep the map usable on phones: the planner becomes a compact bottom sheet
+   instead of covering the map from the top-left corner. */
+@media (max-width: 640px) {
+    #panel {
+        top: 8px;
+        right: 8px;
+        width: min(250px, calc(100% - 16px));
+        max-height: min(38dvh, 300px);
+        padding: 8px 9px;
+        font-size: 12px;
+    }
+
+    .routes-panel-title { font-size: 14px; margin-bottom: 5px; }
+    .route-tree-row { min-height: 24px; }
+    .schedule-field { padding-top: 6px; margin-top: 6px; }
+
+    #journey-open {
+        top: auto;
+        bottom: 12px;
+        left: 8px;
+        padding: 8px 11px;
+        font-size: 13px;
+    }
+
+    #journey-panel {
+        left: 8px;
+        right: 8px;
+        top: auto;
+        bottom: 8px;
+        width: auto;
+        max-height: min(58dvh, 480px);
+        padding: 9px 10px;
+        border-radius: 10px;
+        font-size: 12px;
+    }
+
+    .journey-head { margin-bottom: 5px; }
+    .journey-endpoints { gap: 5px; margin-bottom: 5px; }
+    .journey-endpoint { padding: 6px; }
+    .journey-field { padding-top: 6px; margin-bottom: 6px; }
+    .journey-field input { padding: 4px; }
+    .journey-field input + input { margin-top: 4px; }
+    .journey-search-btn { padding: 7px; font-size: 13px; }
+    #journey-hint { margin-top: 6px; }
+    #journey-results { margin-top: 6px; }
+    .journey-option { margin-bottom: 6px; }
+    .journey-option-head { padding: 6px; gap: 4px; }
+    .journey-time { font-size: 12px; }
+    .journey-total { display: none; }
+    .journey-legs { padding: 2px 8px 5px; }
+    .journey-legs li { padding: 4px 0; font-size: 11px; }
+}
+
+/* Landscape phones and short desktop windows need a shorter overlay so the
+   map remains visible while route results stay independently scrollable. */
+@media (max-height: 600px) {
+    #panel { max-height: 32dvh; }
+    #journey-panel { max-height: 72dvh; }
+}
