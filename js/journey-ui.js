@@ -19,12 +19,14 @@ import { troyNow, formatClock } from './time.js';
 const ACCESS_CANDIDATES = 8;   // stops upgraded with real Mapbox walk times
 const ACCESS_RADIUS_M = 800;   // search radius around a clicked point
 const ACCESS_DEFAULT_MIN = 1;  // fallback walk minutes when Mapbox is unavailable
+const BUNDLE_TIMEOUT_MS = 15_000; // schedule bundle fetch deadline
 const MAPBOX_PROFILE = 'mapbox/walking';
 
 // --------------------------------------------------------------- state
 const state = {
     bundle: null,        // planner-data.json, loaded once
     bundleError: null,   // set when the bundle failed to load
+    loadingBundle: false, // a bundle fetch is in flight
     index: null,         // buildIndex(bundle), built once
     mapboxToken: null,   // from map.js config
     active: false,       // panel open?
@@ -48,6 +50,10 @@ export function initJourneyUi({ map, apiBase, mapboxToken }) {
 
     $('journey-open').addEventListener('click', togglePanel);
     $('journey-close').addEventListener('click', togglePanel);
+    $('journey-retry').addEventListener('click', () => {
+        state.bundleError = null;
+        loadBundleOnce();
+    });
     $('journey-set-origin').addEventListener('click', () => armClick('origin'));
     $('journey-set-destination').addEventListener('click', () => armClick('destination'));
     $('journey-search').addEventListener('click', runSearch);
@@ -63,35 +69,60 @@ export function initJourneyUi({ map, apiBase, mapboxToken }) {
     const now = troyNow();
     $('journey-when').value = `${String(Math.floor(now.minute / 60)).padStart(2, '0')}:${String(now.minute % 60).padStart(2, '0')}`;
     $('journey-date').value = now.date;
+
+    // Load the 1.2 MB schedule bundle when the map loads, not when the panel
+    // is first opened: by the time someone taps Directions it is usually ready.
+    loadBundleOnce();
     updateControls();
+}
+
+function openPanel() {
+    state.active = true;
+    $('journey-panel').hidden = false;
+    $('journey-open').hidden = true;
+    document.body.classList.add('journey-active');
+    loadBundleOnce();
+}
+
+function closePanel() {
+    state.active = false;
+    state.armed = null;
+    $('journey-panel').hidden = true;
+    $('journey-open').hidden = false;
+    document.body.classList.remove('journey-active');
+    updateControls();
+    clearResults();
 }
 
 function togglePanel() {
-    state.active = !state.active;
-    $('journey-panel').hidden = !state.active;
-    if (state.active) {
-        $('journey-open').hidden = true;
-        loadBundleOnce();
-    } else {
-        $('journey-open').hidden = false;
-        state.armed = null;
-        updateControls();
-        clearResults();
-    }
+    if (state.active) closePanel();
+    else openPanel();
 }
 
 async function loadBundleOnce() {
-    if (state.bundle) return;
+    if (state.bundle || state.loadingBundle) return;
+    state.loadingBundle = true;
+    state.bundleError = null;
     updateControls();
+
+    // A hung request must not wedge the panel forever: abort after 15 s and
+    // offer a retry button. (AbortSignal.timeout is supported in every
+    // current browser; the guard keeps older ones functional.)
+    const options = typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+        ? {signal: AbortSignal.timeout(BUNDLE_TIMEOUT_MS)}
+        : {};
     try {
-        const response = await fetch(`${state.apiBase}/planner/planner-data.json`);
+        const response = await fetch(`${state.apiBase}/planner/planner-data.json`, options);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         state.bundle = await response.json();
         state.index = buildIndex(state.bundle);
     } catch (error) {
-        state.bundleError = error.message;
+        state.bundleError = error.name === 'TimeoutError'
+            ? 'timed out' : error.message;
+    } finally {
+        state.loadingBundle = false;
+        updateControls();
     }
-    updateControls();
 }
 
 // Reflects the whole input state on the controls, so every dead end is
@@ -114,11 +145,13 @@ function updateControls() {
     searchBtn.disabled = !ready || state.searching;
     searchBtn.textContent = state.searching ? 'Searching…' : 'Find routes';
 
+    $('journey-retry').hidden = !state.bundleError;
+
     // Only write the hint when we have something to say; search results
     // manage it themselves.
     if (state.bundleError) {
-        hint.textContent = `Could not load planner data: ${state.bundleError}. ` +
-            'Is planner/planner-data.json built and served?';
+        hint.textContent = `Could not load transit schedules (${state.bundleError}). ` +
+            'Check that the dev server is running, then retry.';
     } else if (!state.bundle) {
         hint.textContent = 'Loading transit schedules…';
     } else if (state.armed) {

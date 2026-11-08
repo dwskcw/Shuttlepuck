@@ -130,6 +130,16 @@ html, body { height: 100%; margin: 0; }
     font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
     color: #1c1c1c;
 }
+/* The rule above (display: flex) outranks the browser's default
+   [hidden] { display: none }, which made the panel impossible to hide —
+   restore it explicitly. */
+#journey-panel[hidden] { display: none; }
+
+/* While the trip planner is open on a small screen, the routes panel would
+   sit underneath it; hide it instead. */
+@media (max-width: 640px) {
+    body.journey-active #routes-panel { display: none; }
+}
 .journey-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 #journey-close { border: 0; background: transparent; font-size: 15px; cursor: pointer; color: #475569; padding: 2px 6px; }
 #journey-close:hover { background: #eef2f7; border-radius: 4px; }
@@ -167,6 +177,18 @@ html, body { height: 100%; margin: 0; }
 }
 .journey-search-btn:hover { background: #1d4ed8; }
 .journey-search-btn:disabled { background: #93b4f5; cursor: default; }
+
+#journey-retry {
+    width: 100%;
+    margin-top: 6px;
+    padding: 6px;
+    border: 1px solid #b8c3cf;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    font: inherit;
+}
+#journey-retry:hover { border-color: #2563eb; }
 
 #journey-hint { margin: 8px 0 0; color: #555; font-size: 12px; }
 
