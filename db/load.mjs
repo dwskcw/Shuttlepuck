@@ -25,6 +25,19 @@ if (!process.env.TIGER_DATABASE_URL) {
 const client = new pg.Client({ connectionString: process.env.TIGER_DATABASE_URL });
 await client.connect();
 
+// Friendly early check: the most common setup slip is loading before the
+// schema exists (error 42P01, relation does not exist).
+const { rows: tableCheck } = await client.query(`
+    SELECT to_regclass('public.cdta_routes') IS NOT NULL AS schema_present
+`);
+if (!tableCheck[0].schema_present) {
+    console.error('The database has no schema yet. First run:');
+    console.error('  node --env-file=.env db/apply-schema.mjs');
+    console.error('Then run this loader again.');
+    await client.end();
+    process.exit(1);
+}
+
 // CSV reader for the GTFS text files (quoted fields included).
 function parseCsvLine(line) {
     const values = [];

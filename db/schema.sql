@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS bike_docks (
 --    minute with the last stop it was near. Continuous aggregates cannot
 --    contain window functions, so the stop-to-stop segmentation happens one
 --    layer up, where `last()` (a CAGG-supported hyperfunction) is enough.
--- 2. shuttle_travel_times (a normal view): LAG pairs consecutive minute rows
+-- 2. shuttle_travel_times (a normal view): LEAD pairs consecutive minute rows
 --    of the same vehicle, keeping only real stop-to-stop transitions, and
 --    reports the median minutes per route/pair/hour. Query-time aggregation
 --    is plenty at hackathon data volumes; if it ever grows, this view is
@@ -165,30 +165,41 @@ SELECT add_continuous_aggregate_policy('shuttle_position_stops',
     schedule_interval => INTERVAL '5 minutes',
     if_not_exists     => TRUE);
 
-CREATE VIEW IF NOT EXISTS shuttle_travel_times AS
-WITH pairs AS (
-    SELECT
-        route_key,
-        near_stop AS from_stop,
-        LEAD(near_stop) OVER (PARTITION BY vehicle_id ORDER BY bucket) AS to_stop,
-        LEAD(bucket)    OVER (PARTITION BY vehicle_id ORDER BY bucket) AS next_bucket,
-        bucket
-    FROM shuttle_position_stops
-    WHERE near_stop IS NOT NULL
-)
-SELECT
-    route_key,
-    from_stop,
-    to_stop,
-    EXTRACT(hour FROM bucket) AS hour_of_day,
-    COUNT(*) AS samples,
-    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY minutes) AS median_min
-FROM (
-    SELECT *,
-        EXTRACT(epoch FROM (next_bucket - bucket)) / 60.0 AS minutes
-    FROM pairs
-) seg
-WHERE to_stop IS NOT NULL
-  AND to_stop <> from_stop
-  AND minutes BETWEEN 0.2 AND 10   -- ignore gaps (parked, garage, signal loss)
-GROUP BY route_key, from_stop, to_stop, hour_of_day;
+-- Plain CREATE VIEW has no IF NOT EXISTS, so wrap it in a DO block to keep
+-- this file re-runnable. (The $$ body must not contain standalone-comment
+-- semicolons issues: db/apply-schema.mjs strips "--" comments, which is safe
+-- here because the view body has no string literals or comment semicolons.)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_views WHERE schemaname = 'public'
+                   AND viewname = 'shuttle_travel_times') THEN
+        CREATE VIEW shuttle_travel_times AS
+        WITH pairs AS (
+            SELECT
+                route_key,
+                near_stop AS from_stop,
+                LEAD(near_stop) OVER (PARTITION BY vehicle_id ORDER BY bucket) AS to_stop,
+                LEAD(bucket)    OVER (PARTITION BY vehicle_id ORDER BY bucket) AS next_bucket,
+                bucket
+            FROM shuttle_position_stops
+            WHERE near_stop IS NOT NULL
+        )
+        SELECT
+            route_key,
+            from_stop,
+            to_stop,
+            EXTRACT(hour FROM bucket) AS hour_of_day,
+            COUNT(*) AS samples,
+            PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY minutes) AS median_min
+        FROM (
+            SELECT *,
+                EXTRACT(epoch FROM (next_bucket - bucket)) / 60.0 AS minutes
+            FROM pairs
+        ) seg
+        WHERE to_stop IS NOT NULL
+          AND to_stop <> from_stop
+          AND minutes BETWEEN 0.2 AND 10
+        GROUP BY route_key, from_stop, to_stop, hour_of_day;
+    END IF;
+END
+$$;
