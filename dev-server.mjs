@@ -1,7 +1,7 @@
-// Local development server for shubble-map.html (Node 18+, no dependencies).
+// Local development server for map.html (Node 18+, no dependencies).
 //
 //   node dev-server.mjs
-//   open http://localhost:3001/?api=same-origin
+//   open http://localhost:3001/
 //
 // The browser loads this page, its CSS/JS, and CDTA JSONs from the same origin.
 // Requests to /api/* are still proxied to the Shubble backend.
@@ -19,9 +19,9 @@ const client = UPSTREAM.protocol === 'https:' ? https : http;
 
 // Only these static files are served. No arbitrary filesystem paths are exposed.
 const staticContentTypes = new Map([
-    ['/shubble-map.html', 'text/html; charset=utf-8'],
-    ['/shubble-map.css', 'text/css; charset=utf-8'],
-    ['/shubble-map.js', 'text/javascript; charset=utf-8'],
+    ['/map.html', 'text/html; charset=utf-8'],
+    ['/map.css', 'text/css; charset=utf-8'],
+    ['/map.js', 'text/javascript; charset=utf-8'],
     ['/cdta-transit.json', 'application/json; charset=utf-8'],
     ['/cdta-departures.json', 'application/json; charset=utf-8']
 ]);
@@ -50,7 +50,7 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    const filename = pathname === '/' ? '/shubble-map.html' : pathname;
+    const filename = pathname === '/' ? '/map.html' : pathname;
     const contentType = staticContentTypes.get(filename);
     if (contentType) {
         try {
@@ -71,6 +71,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-    console.log(`Map:      http://localhost:${PORT}/?api=same-origin`);
+    console.log(`Map:      http://localhost:${PORT}/`);
     console.log(`Proxying: /api/* -> ${UPSTREAM.origin}`);
 });

@@ -6,14 +6,13 @@ import {
 // ---------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------
-// ?api=http://localhost:8000  -> use a local backend
-// ?api=same-origin            -> call /api/* on the server that served this page
-//                                (use with dev-server.mjs, which proxies to Shubble)
+// By default, call /api/* on the server that served this page (use with
+// dev-server.mjs, which proxies to Shubble). Set ?api=<url> to override it.
 const params = new URLSearchParams(location.search);
 const apiParam = params.get('api');
-const API_BASE = apiParam === 'same-origin'
+const API_BASE = !apiParam || apiParam === 'same-origin'
     ? ''
-    : (apiParam ?? 'https://shuttles.rpi.edu').replace(/\/$/, '');
+    : apiParam.replace(/\/$/, '');
 const POLL_MS = 5000;            // same cadence as the Shubble frontend
 const OFF_ROUTE_COLOR = '#666666';
 
@@ -25,7 +24,7 @@ const map = new LeafletMap('map', {
     zoom: 17
 });
 
-const tiles = new TileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/512/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiZHdza2N3IiwiYSI6ImNtdzZyd3d3ZzBpY2IzMG9wc28weXNsbHgifQ.9zT3RQw_K7LbSSYeJXxPNg', {
+const tiles = new TileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/512/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiZHdza2N3IiwiYSI6ImNtdzdic2c4YTBtYXcyenM3b3pka2Q5cHMifQ.2xozS12wxM2rVMzTDE-X6w', {
     tileSize: 512,
     zoomOffset: -1,
     maxZoom: 22,
