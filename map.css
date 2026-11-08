@@ -30,6 +30,28 @@ html, body { height: 100%; margin: 0; }
     box-shadow: 0 1px 4px rgba(0, 0, 0, .5);
 }
 
+.bike-location-icon { background: none; border: 0; }
+.bike-location-icon svg {
+    display: block;
+    box-sizing: border-box;
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+    overflow: visible;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+}
+.bike-location-icon circle,
+.bike-location-icon path {
+    fill: none;
+    stroke: #9333ea;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+}
+
 .shuttle-popup strong { display: block; margin-bottom: 2px; }
 .shuttle-popup .muted { color: #666; }
 

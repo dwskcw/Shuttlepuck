@@ -364,7 +364,79 @@ export function search(index, {
     }
 
     itineraries.sort((a, b) => a.arrival - b.arrival);
-    return itineraries;
+    return removeDominatedShuttleOptions(
+        index,
+        selectPreferredShuttleBoardings(index, itineraries),
+    );
+}
+
+function selectPreferredShuttleBoardings(index, itineraries) {
+    const preferred = new Map();
+    const others = [];
+
+    for (const itinerary of itineraries) {
+        const shuttles = itinerary.legs.filter((leg) => leg.type === 'shuttle');
+        if (shuttles.length !== 1 || itinerary.legs.some((leg) => leg.type === 'bus')) {
+            others.push(itinerary);
+            continue;
+        }
+
+        const shuttle = shuttles[0];
+        const boardingOffset = shuttleStopOffset(index, shuttle, 'fromNode');
+        const tripStart = shuttle.departMinute - boardingOffset;
+        const key = `${shuttle.route}:${tripStart}`;
+        const firstWalk = itinerary.legs[0]?.type === 'walk'
+            ? itinerary.legs[0].minutes : 0;
+        const alightingOffset = shuttleStopOffset(index, shuttle, 'toNode');
+        const current = preferred.get(key);
+        const currentArrival = current?.itinerary.arrival ?? Infinity;
+        if (!current || firstWalk < current.firstWalk
+            || (firstWalk === current.firstWalk
+                && (boardingOffset < current.boardingOffset
+                    || (boardingOffset === current.boardingOffset
+                        && (itinerary.arrival < currentArrival
+                            || (itinerary.arrival === currentArrival
+                                && alightingOffset > current.alightingOffset)))))) {
+            preferred.set(key, {
+                itinerary, firstWalk, boardingOffset, alightingOffset,
+            });
+        }
+    }
+
+    return [...others, ...[...preferred.values()].map(({ itinerary }) => itinerary)];
+}
+
+function removeDominatedShuttleOptions(index, itineraries) {
+    return itineraries.filter((candidate, candidateIndex) => {
+        const candidateShuttles = candidate.legs.filter((leg) => leg.type === 'shuttle');
+        if (candidateShuttles.length !== 1
+            || candidate.legs.some((leg) => leg.type === 'bus')) return true;
+        const candidateTransit = candidateShuttles.map((leg) =>
+            [leg.route, leg.fromNode, leg.departMinute]);
+        const candidateOffset = shuttleStopOffset(index, candidateShuttles[0], 'toNode');
+
+        return !itineraries.some((other, otherIndex) => {
+            if (candidateIndex === otherIndex) return false;
+            const otherShuttles = other.legs.filter((leg) => leg.type === 'shuttle');
+            if (otherShuttles.length !== 1 || other.legs.some((leg) => leg.type === 'bus')) return false;
+            if (JSON.stringify(otherShuttles.map((leg) =>
+                [leg.route, leg.fromNode, leg.departMinute])) !== JSON.stringify(candidateTransit)) {
+                return false;
+            }
+
+            const otherOffset = shuttleStopOffset(index, otherShuttles[0], 'toNode');
+            return otherOffset > candidateOffset
+                && other.arrival <= candidate.arrival
+                && totalWalkMinutes(other.legs) <= totalWalkMinutes(candidate.legs);
+        });
+    });
+}
+
+function shuttleStopOffset(index, leg, endpoint) {
+    const stopKey = leg[endpoint]?.slice('shuttle:'.length);
+    const stop = index.bundle.shuttle.stops.find((candidate) =>
+        candidate.key === stopKey);
+    return stop?.offsets[leg.route] ?? -Infinity;
 }
 
 function totalWalkMinutes(legs) {
@@ -384,7 +456,7 @@ function findShuttleAlternatives(index, {
     const destinationAccess = new Map(
         destAccess.map((access) => [access.nodeKey, access.minutes]),
     );
-    const bestByRoute = new Map();
+    const bestByBoarding = new Map();
 
     for (const access of originAccess) {
         if (!access.nodeKey.startsWith('shuttle:')) continue;
@@ -412,8 +484,12 @@ function findShuttleAlternatives(index, {
                 const arriveMinute = boarding.dep
                     + (alightStop.offsets[boarding.route] - boardingOffset)
                     + finalWalkMinutes;
-                const current = bestByRoute.get(boarding.route);
-                if (current && current.arrival <= arriveMinute) continue;
+                const boardingKey = `${boarding.route}:${stopKey}:${boarding.dep}`;
+                const current = bestByBoarding.get(boardingKey);
+                if (current && (current.arrival < arriveMinute
+                    || (current.arrival === arriveMinute
+                        && shuttleStopOffset(index, current.legs[1], 'toNode')
+                            >= alightStop.offsets[boarding.route]))) continue;
 
                 const walkToStop = {
                     type: 'walk',
@@ -445,7 +521,7 @@ function findShuttleAlternatives(index, {
                     fromPoint: { lat: alightStop.lat, lon: alightStop.lon },
                     toPoint: { lat: destination.lat, lon: destination.lon },
                 };
-                bestByRoute.set(boarding.route, {
+                bestByBoarding.set(boardingKey, {
                     legs: [walkToStop, shuttle, finalWalk],
                     departure: departMinute,
                     arrival: arriveMinute,
@@ -454,7 +530,7 @@ function findShuttleAlternatives(index, {
             }
         }
     }
-    return [...bestByRoute.values()];
+    return [...bestByBoarding.values()];
 }
 
 // Ride phase for one shuttle stop: board the earliest departure of each route

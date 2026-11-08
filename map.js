@@ -681,9 +681,17 @@ async function loadBikeLocations() {
                 popup.append(capacity);
             }
 
-            new CircleMarker([latitude, longitude], {
-                radius: 6, color: '#fff', weight: 1.5,
-                fillColor: '#9333ea', fillOpacity: 0.95
+            new Marker([latitude, longitude], {
+                icon: new DivIcon({
+                    className: 'bike-location-icon',
+                    html: `<svg viewBox="0 0 32 32" aria-hidden="true">
+                        <circle cx="8" cy="22" r="5.5"></circle>
+                        <circle cx="24" cy="22" r="5.5"></circle>
+                        <path d="M8 22l5-10h5l6 10h-8l-3-7m8-3h4m-2 0 3 4"></path>
+                    </svg>`,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16],
+                }),
             }).bindPopup(popup).addTo(bikeLayer);
             plotted++;
         }

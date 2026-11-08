@@ -179,6 +179,55 @@ test('keeps shuttle alternatives with modestly more walking than walking directl
         itinerary.legs.some((leg) => leg.type === 'shuttle')));
 });
 
+test('gets off earlier when walking from there arrives sooner', () => {
+    const bundle = syntheticBundle();
+    bundle.shuttle.stops.push(
+        { key: 'EARLY', name: 'Earlier stop', lat: 0, lon: 0.001, offsets: { A: 6 } },
+        { key: 'LATER', name: 'Later stop', lat: 0, lon: 0.002, offsets: { A: 8 } },
+    );
+    const itineraries = run(bundle, {
+        origin: { lat: 0, lon: 0, label: 'Origin' },
+        destination: { lat: 0, lon: 0.002, label: 'Destination' },
+        date: WEEKDAY,
+        departMinute: 9 * 60 + 48,
+        originAccess: [{ nodeKey: 'shuttle:A0', minutes: 1 }],
+        destAccess: [
+            { nodeKey: 'shuttle:EARLY', minutes: 8 },
+            { nodeKey: 'shuttle:LATER', minutes: 12 },
+        ],
+        direct: { walk: { minutes: 30 } },
+    });
+
+    const shuttleOptions = itineraries.filter((itinerary) =>
+        itinerary.legs.some((leg) => leg.type === 'shuttle'));
+    assert.ok(shuttleOptions.length > 0, 'expected a shuttle option');
+    assert.ok(shuttleOptions.some((itinerary) =>
+        itinerary.legs.some((leg) => leg.type === 'shuttle' && leg.to === 'Earlier stop')));
+    assert.ok(!shuttleOptions.some((itinerary) =>
+        itinerary.legs.some((leg) => leg.type === 'shuttle' && leg.to === 'Later stop')));
+});
+
+test('prefers the shortest walk to board the same shuttle run', () => {
+    const bundle = syntheticBundle();
+    const itineraries = run(bundle, {
+        origin: { lat: 0, lon: 0, label: 'Origin' },
+        destination: { lat: 0, lon: 0.0036, label: 'Destination' },
+        date: WEEKDAY,
+        departMinute: 9 * 60 + 49,
+        originAccess: [
+            { nodeKey: 'shuttle:A0', minutes: 4 },
+            { nodeKey: 'shuttle:A1', minutes: 8 },
+        ],
+        destAccess: [{ nodeKey: 'shuttle:A2', minutes: 1 }],
+        direct: { walk: { minutes: 30 } },
+    });
+
+    const shuttleOptions = itineraries.filter((itinerary) =>
+        itinerary.legs.some((leg) => leg.type === 'shuttle'));
+    assert.equal(shuttleOptions.length, 1);
+    assert.equal(shuttleOptions[0].legs[0].to, 'A zero');
+});
+
 test('chains shuttle -> footpath -> bus with wait time', () => {
     const bundle = syntheticBundle();
     const originAccess = [{ nodeKey: 'shuttle:A0', minutes: 1 }];
