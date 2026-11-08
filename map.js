@@ -940,10 +940,19 @@ const routesCloseBtn = document.getElementById('routes-close');
 
 function setPanelOpen(open) {
     if (!mobileMq.matches) return;           // no-op on desktop
+    
     panel.classList.toggle('open', open);
+    document.body.classList.toggle('panel-open', open); // <-- ADD THIS
+    
     panel.setAttribute('aria-hidden', String(!open));
     routesOpenBtn.setAttribute('aria-expanded', String(open));
     (open ? routesCloseBtn : routesOpenBtn).focus();
+
+    // If opening routes, close journey panel to avoid overlap
+    if (open) {
+        const journeyCloseBtn = document.getElementById('journey-close');
+        if (journeyCloseBtn) journeyCloseBtn.click();
+    }
 }
 
 routesOpenBtn.addEventListener('click', () => setPanelOpen(true));

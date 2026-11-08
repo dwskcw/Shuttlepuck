@@ -40,36 +40,45 @@ html, body { height: 100%; margin: 0; }
 }
 
 @media (max-width: 768px) {
-    #panel {
-        position: fixed;
-        top: auto;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        width: auto;
-        max-height: 85dvh;          /* dvh handles mobile URL-bar churn */
-        overflow-y: auto;
-        border-radius: 16px 16px 0 0;
-        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
-        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
-        z-index: 1100;
+    /* ... keep your existing #map and #panel rules ... */
 
-        transform: translateY(100%);
-        visibility: hidden;         /* not focusable while closed */
-        transition: transform 0.25s ease-out, visibility 0s linear 0.25s;
-    }
-    #panel.open {
-        transform: translateY(0);
-        visibility: visible;
-        transition: transform 0.25s ease-out, visibility 0s linear 0s;
+    /* Fix the FABs so they don't stretch */
+    #journey-open, .fab-routes {
+        position: fixed !important;
+        z-index: 1000 !important;
+        
+        /* THE FIX: reset top and force a specific height */
+        top: auto !important; 
+        height: 44px !important;
+        width: auto !important;
+        padding: 0 16px !important;
+        
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 999px !important;
+        box-sizing: border-box !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25) !important;
+        white-space: nowrap !important;
     }
 
-    .panel-close { display: inline-flex; align-items: center; justify-content: center; }
-    .fab-routes  { display: inline-flex; align-items: center; gap: 6px; }
+    #journey-open {
+        bottom: calc(68px + env(safe-area-inset-bottom, 0)) !important;
+        left: 12px !important;
+    }
+    
+    .fab-routes {
+        bottom: calc(12px + env(safe-area-inset-bottom, 0)) !important;
+        left: 12px !important;
+    }
 
-    /* If your #journey-open already sits bottom-left, lift it above the FAB.
-       Adjust or delete this rule to match your layout. */
-    #journey-open { bottom: calc(72px + env(safe-area-inset-bottom, 0)); }
+    /* Bulletproof hide: use CSS sibling selectors to hide buttons when panels are open */
+    #panel.open ~ #journey-open,
+    #panel.open ~ .fab-routes,
+    #journey-panel:not([hidden]) ~ #journey-open,
+    #journey-panel:not([hidden]) ~ .fab-routes {
+        display: none !important;
+    }
 }
 
 /* Shuttle marker: a colored dot with a pointer that rotates to the heading. */

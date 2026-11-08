@@ -80,7 +80,17 @@ function openPanel() {
     state.active = true;
     $('journey-panel').hidden = false;
     $('journey-open').hidden = true;
-    document.body.classList.add('journey-active');
+    document.body.classList.add('journey-active', 'panel-open'); // <-- ADD 'panel-open'
+    
+    // If opening journey, close routes panel
+    if (window.matchMedia('(max-width: 768px)').matches) {
+        const routesPanel = document.getElementById('panel');
+        if (routesPanel && routesPanel.classList.contains('open')) {
+            const routesCloseBtn = document.getElementById('routes-close');
+            if (routesCloseBtn) routesCloseBtn.click();
+        }
+    }
+
     loadBundleOnce();
 }
 
@@ -89,7 +99,7 @@ function closePanel() {
     state.armed = null;
     $('journey-panel').hidden = true;
     $('journey-open').hidden = false;
-    document.body.classList.remove('journey-active');
+    document.body.classList.remove('journey-active', 'panel-open'); // <-- REMOVE 'panel-open'
     updateControls();
     clearResults();
 }
