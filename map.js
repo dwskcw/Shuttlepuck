@@ -97,6 +97,8 @@ const routeTreeContainer = document.getElementById('route-tree');
 // Only these two Shubble routes and two CDTA routes are initially visible.
 const selectedShuttleRoutes = new Set(['NORTH', 'WEST']);
 const selectedCdtaRoutes = new Set();
+const itineraryShuttleRoutes = new Set();
+const itineraryCdtaRoutes = new Set();
 let bikeLocationsEnabled = true;
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
@@ -135,11 +137,18 @@ const routeColors = new Map();   // route key -> color (hidden routes get grey)
 const shuttleRouteLayers = new Map(); // route key -> independently toggleable layer
 
 function syncShuttleVisibility() {
-    for (const [key, layer] of shuttleRouteLayers) {
+    for (const [key, layers] of shuttleRouteLayers) {
         if (selectedShuttleRoutes.has(key)) {
-            if (!map.hasLayer(layer)) map.addLayer(layer);
-        } else if (map.hasLayer(layer)) {
-            map.removeLayer(layer);
+            if (itineraryShuttleRoutes.has(key)) {
+                if (map.hasLayer(layers.stops)) map.removeLayer(layers.stops);
+                if (map.hasLayer(layers.line)) map.removeLayer(layers.line);
+            } else {
+                if (!map.hasLayer(layers.stops)) map.addLayer(layers.stops);
+                if (!map.hasLayer(layers.line)) map.addLayer(layers.line);
+            }
+        } else {
+            if (map.hasLayer(layers.line)) map.removeLayer(layers.line);
+            if (map.hasLayer(layers.stops)) map.removeLayer(layers.stops);
         }
     }
     syncVehicleVisibility();
@@ -157,14 +166,15 @@ async function loadRoutes() {
         if (!visible) continue;
 
         const color = routeColors.get(key);
-        const routeLayer = new LayerGroup();
+        const lineLayer = new LayerGroup();
+        const stopLayer = new LayerGroup();
 
         for (const leg of route.ROUTES ?? []) {
-            routeLayer.addLayer(new Polyline(leg, {
+            lineLayer.addLayer(new Polyline(leg, {
                 color: '#ffffff', weight: 9, opacity: 0.9,
                 lineCap: 'round', lineJoin: 'round', interactive: false
             }));
-            routeLayer.addLayer(new Polyline(leg, {
+            lineLayer.addLayer(new Polyline(leg, {
                 color, weight: 5, opacity: 0.95,
                 lineCap: 'round', lineJoin: 'round', interactive: false
             }));
@@ -188,9 +198,9 @@ async function loadRoutes() {
                 radius: 5, color, weight: 3, fillColor: '#ffffff', fillOpacity: 1
             });
             marker.bindTooltip(stop.NAME);
-            routeLayer.addLayer(marker);
+            stopLayer.addLayer(marker);
         }
-        shuttleRouteLayers.set(key, routeLayer);
+        shuttleRouteLayers.set(key, {line: lineLayer, stops: stopLayer});
     }
 
     syncShuttleVisibility();
@@ -440,7 +450,7 @@ function cdtaDrawLines() {
 
     for (const index of selectedCdtaRoutes) {
         const route = cdtaTransit.routes[index];
-        if (!route) continue;
+        if (!route || itineraryCdtaRoutes.has(route.short)) continue;
         for (const encoded of route.lines) {
             const points = cdtaDecodeLine(encoded);
             if (points.length < 2) continue;
@@ -575,7 +585,9 @@ function cdtaDrawStops() {
         const [id, name, lat, lon, routeIndexes] = stop;
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
         if (!bounds.contains([lat, lon])) return;
-        if (!routeIndexes.some(routeIndex => selectedCdtaRoutes.has(routeIndex))) return;
+        if (!routeIndexes.some((routeIndex) =>
+            selectedCdtaRoutes.has(routeIndex)
+            && !itineraryCdtaRoutes.has(cdtaTransit.routes[routeIndex]?.short))) return;
 
         const marker = new CircleMarker([lat, lon], {
             radius: 4, color: '#fff', weight: 1.5,
@@ -825,6 +837,10 @@ function applyRouteSelection() {
 function selectItineraryOverlays(event) {
     const shuttleRoutes = new Set(event.detail?.shuttleRoutes ?? []);
     const cdtaShorts = new Set(event.detail?.cdtaRoutes ?? []);
+    itineraryShuttleRoutes.clear();
+    itineraryCdtaRoutes.clear();
+    for (const route of shuttleRoutes) itineraryShuttleRoutes.add(route);
+    for (const route of cdtaShorts) itineraryCdtaRoutes.add(route);
 
     for (const key of selectedShuttleRoutes) {
         if (!shuttleRoutes.has(key)) selectedShuttleRoutes.delete(key);

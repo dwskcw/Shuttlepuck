@@ -13,7 +13,10 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { buildIndex, search, findWalkAccess, buildDirectOptions } from './journey.js';
+import {
+    buildIndex, search, findWalkAccess, buildDirectOptions,
+    shuttleGeometryBetweenStops, trimGeometryAtStop,
+} from './journey.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -329,6 +332,30 @@ test('findWalkAccess caps and ranks nearby stops', () => {
     assert.ok(access.length >= 2);
     assert.ok(access[0].meters <= access[1].meters, 'sorted by distance');
     assert.ok(access.every((a) => a.meters <= 400));
+});
+
+test('transit geometry stops at the selected alighting stop', () => {
+    const geometry = [[0, 0], [0, 1], [0, 2], [0, 3]];
+    const trimmed = trimGeometryAtStop(geometry, {lat: 0, lon: 1.5});
+
+    assert.deepEqual(trimmed, [[0, 0], [0, 1], [0, 1.5]]);
+});
+
+test('shuttle geometry follows the route between the selected stops', async () => {
+    const bundle = JSON.parse(await readFile(path.join(ROOT, 'planner', 'planner-data.json'), 'utf8'));
+    const from = bundle.shuttle.stops.find((stop) => stop.key === 'STAC_3');
+    const to = bundle.shuttle.stops.find((stop) => stop.key === 'ECAV');
+    const points = shuttleGeometryBetweenStops(
+        bundle, 'NORTH', 'shuttle:STAC_3', 'shuttle:ECAV',
+    );
+    const distanceMeters = (point, stop) => Math.hypot(
+        (point[0] - stop.lat) * 111_000,
+        (point[1] - stop.lon) * 111_000 * Math.cos(stop.lat * Math.PI / 180),
+    );
+
+    assert.ok(points.length > 1, 'expected shuttle geometry between stops');
+    assert.ok(distanceMeters(points[0], from) < 10, 'line should start at boarding stop');
+    assert.ok(distanceMeters(points.at(-1), to) < 10, 'line should reach alighting stop');
 });
 
 test('real bundle: campus to downtown finds a chained itinerary', async () => {

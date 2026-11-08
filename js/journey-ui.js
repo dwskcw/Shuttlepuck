@@ -15,6 +15,7 @@ import {
 } from 'leaflet';
 import {
     buildIndex, search, findWalkAccess, buildDirectOptions, findNearestBikeDocks,
+    shuttleGeometryBetweenStops, trimGeometryAtStop,
 } from './journey.js';
 import { troyNow, formatClock } from './time.js';
 
@@ -652,9 +653,13 @@ async function drawItinerary(itinerary) {
 
         // Transit legs: draw the vehicle's real geometry between the two stops.
         const transitIndex = transitLegs.indexOf(leg);
-        const points = transitGeometries[transitIndex] ?? [];
-        const from = nodeCoords(state.bundle, leg.fromNode);
         const to = nodeCoords(state.bundle, leg.toNode);
+        const points = leg.type === 'shuttle'
+            ? transitGeometries[transitIndex] ?? []
+            : to
+            ? trimGeometryAtStop(transitGeometries[transitIndex] ?? [], to)
+            : transitGeometries[transitIndex] ?? [];
+        const from = nodeCoords(state.bundle, leg.fromNode);
         if (points.length > 1) {
             new Polyline(points, {
                 color: '#ffffff', weight: 7, opacity: 0.85, lineCap: 'round',
@@ -772,23 +777,11 @@ function endpointCoords(label) {
 // Real geometry for a transit leg: shuttle loop slice or CDTA pattern shape.
 function transitLegGeometry(bundle, leg) {
     if (leg.type === 'shuttle') {
-        const route = bundle.shuttle.routes[leg.route];
-        const shape = route?.shape;
-        if (!shape) return [];
-        const fromOffset = shuttleStopOffset(bundle, leg.route, leg.fromNode);
-        const toOffset = shuttleStopOffset(bundle, leg.route, leg.toNode);
-        if (fromOffset === null || toOffset === null) return [];
-        return shape
-            .filter((point) => point[2] >= fromOffset && point[2] <= toOffset)
-            .map(([lat, lon]) => [lat, lon]);
+        return shuttleGeometryBetweenStops(
+            bundle, leg.route, leg.fromNode, leg.toNode,
+        );
     }
     return [];
-}
-
-function shuttleStopOffset(bundle, route, nodeKey) {
-    const key = nodeKey?.split(':')[1];
-    const stop = bundle.shuttle.stops.find((s) => s.key === key);
-    return stop?.offsets[route] ?? null;
 }
 
 function escapeHtml(text) {

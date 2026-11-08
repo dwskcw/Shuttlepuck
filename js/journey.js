@@ -83,6 +83,119 @@ export function buildIndex(bundle) {
     return { nodes, footpaths, shuttleDeps, patternsByStop, bundle };
 }
 
+export function trimGeometryAtStop(points, stop) {
+    if (points.length < 2) return points;
+
+    const latitudeScale = Math.cos(stop.lat * Math.PI / 180);
+    const targetX = stop.lon * latitudeScale;
+    let nearest;
+
+    for (let i = 0; i < points.length - 1; i++) {
+        const [fromLat, fromLon] = points[i];
+        const [toLat, toLon] = points[i + 1];
+        const fromX = fromLon * latitudeScale;
+        const toX = toLon * latitudeScale;
+        const dx = toX - fromX;
+        const dy = toLat - fromLat;
+        const lengthSquared = dx * dx + dy * dy;
+        const fraction = lengthSquared === 0
+            ? 0
+            : Math.max(0, Math.min(1, (
+                (targetX - fromX) * dx + (stop.lat - fromLat) * dy
+            ) / lengthSquared));
+        const endpoint = [
+            fromLat + dy * fraction,
+            fromLon + (toLon - fromLon) * fraction,
+        ];
+        const distanceSquared = (endpoint[0] - stop.lat) ** 2
+            + ((endpoint[1] - stop.lon) * latitudeScale) ** 2;
+
+        if (!nearest || distanceSquared < nearest.distanceSquared ||
+            (distanceSquared === nearest.distanceSquared && i + fraction > nearest.position)) {
+            nearest = {position: i + fraction, endpoint, distanceSquared};
+        }
+    }
+
+    const segmentIndex = Math.floor(nearest.position);
+    const trimmed = points.slice(0, segmentIndex + 1);
+    const last = trimmed.at(-1);
+    if (last[0] !== nearest.endpoint[0] || last[1] !== nearest.endpoint[1]) {
+        trimmed.push(nearest.endpoint);
+    }
+    return trimmed;
+}
+
+export function shuttleGeometryBetweenStops(bundle, routeKey, fromNode, toNode) {
+    const shape = bundle.shuttle.routes[routeKey]?.shape;
+    const from = bundle.shuttle.stops.find((stop) => stop.key === fromNode?.split(':')[1]);
+    const to = bundle.shuttle.stops.find((stop) => stop.key === toNode?.split(':')[1]);
+    if (!shape || shape.length < 2 || !from || !to) return [];
+
+    const start = nearestShuttleShapePosition(shape, from, routeKey);
+    const end = nearestShuttleShapePosition(shape, to, routeKey);
+    if (!start || !end) return [];
+
+    const points = [start.point];
+    const appendRange = (rangeStart, rangeEnd) => {
+        for (let i = Math.floor(rangeStart) + 1; i < rangeEnd; i++) {
+            points.push([shape[i][0], shape[i][1]]);
+        }
+    };
+
+    if (end.position >= start.position) {
+        appendRange(start.position, end.position);
+    } else {
+        appendRange(start.position, shape.length - 1);
+        points.push([shape.at(-1)[0], shape.at(-1)[1]]);
+        appendRange(0, end.position);
+    }
+    points.push(end.point);
+    return points;
+}
+
+function nearestShuttleShapePosition(shape, stop, routeKey) {
+    const latitudeScale = Math.cos(stop.lat * Math.PI / 180);
+    const targetX = stop.lon * latitudeScale;
+    const offsetHint = stop.offsets[routeKey];
+    if (!Number.isFinite(offsetHint)) return undefined;
+    let nearest;
+
+    for (let i = 0; i < shape.length - 1; i++) {
+        const before = shape[i];
+        const after = shape[i + 1];
+        const fromX = before[1] * latitudeScale;
+        const toX = after[1] * latitudeScale;
+        const dx = toX - fromX;
+        const dy = after[0] - before[0];
+        const lengthSquared = dx * dx + dy * dy;
+        const fraction = lengthSquared === 0
+            ? 0
+            : Math.max(0, Math.min(1, (
+                (targetX - fromX) * dx + (stop.lat - before[0]) * dy
+            ) / lengthSquared));
+        const point = [
+            before[0] + dy * fraction,
+            before[1] + (after[1] - before[1]) * fraction,
+        ];
+        const distanceSquared = (point[0] - stop.lat) ** 2
+            + ((point[1] - stop.lon) * latitudeScale) ** 2;
+        const offset = before[2] + (after[2] - before[2]) * fraction;
+
+        if (!nearest || distanceSquared < nearest.distanceSquared ||
+            (distanceSquared === nearest.distanceSquared &&
+                Math.abs(offset - offsetHint) < nearest.offsetDifference)) {
+            nearest = {
+                position: i + fraction,
+                point,
+                distanceSquared,
+                offsetDifference: Math.abs(offset - offsetHint),
+            };
+        }
+    }
+
+    return nearest;
+}
+
 // --------------------------------------------------------------- access
 // Stops within walking distance of a point, estimated from straight-line
 // distance. The UI replaces `minutes` with real Mapbox walking times for the
