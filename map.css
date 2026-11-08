@@ -145,6 +145,8 @@ html, body { height: 100%; margin: 0; }
     font: inherit;
 }
 .journey-endpoint:hover { border-color: #2563eb; }
+.journey-endpoint.set { border-color: #16a34a; color: #166534; }
+.journey-endpoint.armed { border-color: #2563eb; background: #eff6ff; }
 
 .journey-field { display: block; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-bottom: 8px; }
 .journey-field input {
@@ -164,6 +166,7 @@ html, body { height: 100%; margin: 0; }
     cursor: pointer;
 }
 .journey-search-btn:hover { background: #1d4ed8; }
+.journey-search-btn:disabled { background: #93b4f5; cursor: default; }
 
 #journey-hint { margin: 8px 0 0; color: #555; font-size: 12px; }
 

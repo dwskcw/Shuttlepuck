@@ -24,10 +24,12 @@ const MAPBOX_PROFILE = 'mapbox/walking';
 // --------------------------------------------------------------- state
 const state = {
     bundle: null,        // planner-data.json, loaded once
+    bundleError: null,   // set when the bundle failed to load
     index: null,         // buildIndex(bundle), built once
     mapboxToken: null,   // from map.js config
     active: false,       // panel open?
     armed: null,         // 'origin' | 'destination' while awaiting a map click
+    searching: false,    // a search request is in flight
     origin: null,        // {lat, lon, label}
     destination: null,   // {lat, lon, label}
     markers: { origin: null, destination: null },
@@ -61,6 +63,7 @@ export function initJourneyUi({ map, apiBase, mapboxToken }) {
     const now = troyNow();
     $('journey-when').value = `${String(Math.floor(now.minute / 60)).padStart(2, '0')}:${String(now.minute % 60).padStart(2, '0')}`;
     $('journey-date').value = now.date;
+    updateControls();
 }
 
 function togglePanel() {
@@ -72,29 +75,65 @@ function togglePanel() {
     } else {
         $('journey-open').hidden = false;
         state.armed = null;
-        $('journey-hint').textContent = 'Click the map to set origin, then destination.';
+        updateControls();
         clearResults();
     }
 }
 
 async function loadBundleOnce() {
     if (state.bundle) return;
+    updateControls();
     try {
-        $('journey-hint').textContent = 'Loading transit schedules…';
         const response = await fetch(`${state.apiBase}/planner/planner-data.json`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         state.bundle = await response.json();
         state.index = buildIndex(state.bundle);
-        $('journey-hint').textContent = 'Click the map to set origin, then destination.';
     } catch (error) {
-        $('journey-hint').textContent = `Could not load planner data: ${error.message}`;
+        state.bundleError = error.message;
+    }
+    updateControls();
+}
+
+// Reflects the whole input state on the controls, so every dead end is
+// visible: which endpoints are set, what is being waited for, and whether
+// Find routes can do anything yet.
+function updateControls() {
+    const originBtn = $('journey-set-origin');
+    const destBtn = $('journey-set-destination');
+    const searchBtn = $('journey-search');
+    const hint = $('journey-hint');
+
+    originBtn.textContent = state.origin ? '✓ Origin set' : '1. Set origin';
+    destBtn.textContent = state.destination ? '✓ Destination set' : '2. Set destination';
+    originBtn.classList.toggle('set', Boolean(state.origin));
+    destBtn.classList.toggle('set', Boolean(state.destination));
+    originBtn.classList.toggle('armed', state.armed === 'origin');
+    destBtn.classList.toggle('armed', state.armed === 'destination');
+
+    const ready = Boolean(state.bundle && state.origin && state.destination);
+    searchBtn.disabled = !ready || state.searching;
+    searchBtn.textContent = state.searching ? 'Searching…' : 'Find routes';
+
+    // Only write the hint when we have something to say; search results
+    // manage it themselves.
+    if (state.bundleError) {
+        hint.textContent = `Could not load planner data: ${state.bundleError}. ` +
+            'Is planner/planner-data.json built and served?';
+    } else if (!state.bundle) {
+        hint.textContent = 'Loading transit schedules…';
+    } else if (state.armed) {
+        hint.textContent = `Now click the map to place the ${state.armed}.`;
+    } else if (!state.origin || !state.destination) {
+        hint.textContent = 'Click “Set origin”, then click the map. Repeat for the destination.';
+    } else if (!state.searching) {
+        hint.textContent = 'Ready — press “Find routes”.';
     }
 }
 
 // --------------------------------------------------------------- input
 function armClick(which) {
-    state.armed = which;
-    $('journey-hint').textContent = `Click the map to set the ${which}.`;
+    state.armed = state.armed === which ? null : which; // toggle off on re-click
+    updateControls();
 }
 
 function onMapClick(event) {
@@ -107,7 +146,6 @@ function onMapClick(event) {
 
 function setEndpoint(which, latlng) {
     state[which] = { lat: latlng[0], lon: latlng[1], label: which === 'origin' ? 'Origin' : 'Destination' };
-    if (state.markers[which]) state.markers[which].remove();
     const marker = new Marker(latlng, {
         draggable: true,
         icon: new DivIcon({
@@ -127,14 +165,25 @@ function setEndpoint(which, latlng) {
 
     // Sensible UX default: after the origin is set, arm the destination next.
     if (which === 'origin' && !state.destination) armClick('destination');
+    updateControls();
     if (state.origin && state.destination) runSearch();
 }
 
 // --------------------------------------------------------------- search
 async function runSearch() {
-    if (!state.bundle || !state.origin || !state.destination) return;
-    const hint = $('journey-hint');
-    hint.textContent = 'Finding routes…';
+    // Backstop for anything updateControls could not prevent — never silent.
+    if (!state.bundle) {
+        $('journey-hint').textContent = 'Still loading schedules — try again in a moment.';
+        loadBundleOnce();
+        return;
+    }
+    if (!state.origin || !state.destination) {
+        $('journey-hint').textContent = 'Set both endpoints first: press “Set origin”, click the map, then “Set destination”.';
+        return;
+    }
+
+    state.searching = true;
+    updateControls();
 
     try {
         const date = $('journey-date').value || troyNow().date;
@@ -158,11 +207,14 @@ async function runSearch() {
         });
 
         renderItineraries(itineraries);
-        hint.textContent = itineraries.length
+        $('journey-hint').textContent = itineraries.length
             ? `${itineraries.length} option${itineraries.length === 1 ? '' : 's'} found`
             : 'No itinerary found — try a nearer stop or another time.';
     } catch (error) {
-        hint.textContent = `Search failed: ${error.message}`;
+        $('journey-hint').textContent = `Search failed: ${error.message}`;
+    } finally {
+        state.searching = false;
+        updateControls();
     }
 }
 
@@ -198,7 +250,8 @@ async function upgradeAccess(access, point) {
         const coords = [point, ...candidates.map((c) => nodeCoords(state.bundle, c.nodeKey))]
             .map((p) => `${p.lon},${p.lat}`).join(';');
         const url = `https://api.mapbox.com/directions-matrix/v1/${MAPBOX_PROFILE}` +
-            `?sources=0&destinations=${candidates.map((_, i) => i + 1).join(';')}` +
+            `?coordinates=${encodeURIComponent(coords)}` +
+            `&sources=0&destinations=${candidates.map((_, i) => i + 1).join(';')}` +
             `&access_token=${encodeURIComponent(state.mapboxToken)}`;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`matrix HTTP ${response.status}`);
