@@ -128,7 +128,9 @@ export function buildDirectOptions(bundle, origin, destination, walkOverride, bi
 
     const straightM = haversineMeters(origin, destination);
     const walkMeters = walkOverride?.meters ?? Math.round(straightM * STREET_FACTOR);
-    if (walkMeters <= MAX_DIRECT_WALK_M) {
+    // A real walking route is authoritative, even beyond the offline
+    // straight-line threshold. Keep the threshold only for estimates.
+    if (walkOverride || walkMeters <= MAX_DIRECT_WALK_M) {
         options.walk = {
             mode: 'walk',
             minutes: walkOverride?.minutes ?? Math.max(1, Math.round(walkMeters / WALK_M_PER_MIN)),
@@ -228,7 +230,14 @@ function shuttleBoardings(index, stopKey, date, fromMinute) {
 //   with Mapbox times by the UI when available)
 // direct: {walk?, bike?} from buildDirectOptions
 // Returns [{legs, departure, arrival, transfers}] sorted by arrival time.
-export function search(index, { origin, destination, date, departMinute, originAccess, destAccess, direct = {} }) {
+export function search(index, {
+    origin, destination, date, departMinute, originAccess, destAccess, direct = {},
+    modes = {},
+}) {
+    const allowWalk = true;
+    const allowBike = modes.bike !== false;
+    const allowShuttle = modes.shuttle !== false;
+    const allowBus = modes.bus !== false;
     const destAccessMin = new Map(destAccess.map((a) => [a.nodeKey, a.minutes]));
 
     // bestArrival: nodeKey -> earliest known arrival minute.
@@ -251,10 +260,12 @@ export function search(index, { origin, destination, date, departMinute, originA
     };
 
     // Seed: walking from the origin to nearby stops.
-    for (const access of originAccess) {
-        improve(access.nodeKey, departMinute + access.minutes, {
-            from: null, via: { type: 'walk', minutes: access.minutes },
-        });
+    if (allowWalk) {
+        for (const access of originAccess) {
+            improve(access.nodeKey, departMinute + access.minutes, {
+                from: null, via: { type: 'walk', minutes: access.minutes },
+            });
+        }
     }
 
     // Per-round best arrival at the destination (see snapshot loop below).
@@ -263,9 +274,9 @@ export function search(index, { origin, destination, date, departMinute, originA
     for (let round = 1; round <= MAX_ROUNDS; round++) {
         // --- ride phase: board at every stop reached so far ---
         for (const [stopKey, arrivalMin] of [...bestArrival]) {
-            if (stopKey.startsWith('shuttle:')) {
+            if (stopKey.startsWith('shuttle:') && allowShuttle) {
                 rideShuttle(index, stopKey, arrivalMin, date, improve);
-            } else {
+            } else if (stopKey.startsWith('cdta:') && allowBus) {
                 rideCdta(index, stopKey, arrivalMin, date, improve);
             }
         }
@@ -274,29 +285,33 @@ export function search(index, { origin, destination, date, departMinute, originA
         // stop-to-stop walks; they become boardable next round ---
         const spreadFrom = [...newlyReached.entries()];
         newlyReached = new Map();
-        for (const [stopKey, arrivalMin] of spreadFrom) {
-            for (const path of index.footpaths.get(stopKey) ?? []) {
-                improve(path.to, arrivalMin + path.minutes, {
-                    from: stopKey, via: { type: 'walk', minutes: path.minutes },
-                });
+        if (allowWalk) {
+            for (const [stopKey, arrivalMin] of spreadFrom) {
+                for (const path of index.footpaths.get(stopKey) ?? []) {
+                    improve(path.to, arrivalMin + path.minutes, {
+                        from: stopKey, via: { type: 'walk', minutes: path.minutes },
+                    });
+                }
             }
         }
 
         // --- destination check: final walk from any reached stop ---
         // (Runs on the full bestArrival because footpaths from earlier rounds
         // may still beat this round's rides.)
-        let bestArrivalAtDest = direct.walk
+        let bestArrivalAtDest = allowWalk && direct.walk
             ? departMinute + direct.walk.minutes : Infinity;
-        let arrivalAt = direct.walk ? { direct: 'walk' } : null;
-        for (const [stopKey, arrivalMin] of bestArrival) {
-            const walkMin = destAccessMin.get(stopKey);
-            if (walkMin === undefined) continue;
-            if (arrivalMin + walkMin < bestArrivalAtDest) {
-                bestArrivalAtDest = arrivalMin + walkMin;
-                arrivalAt = { stopKey, walkMin };
+        let arrivalAt = allowWalk && direct.walk ? { direct: 'walk' } : null;
+        if (allowWalk) {
+            for (const [stopKey, arrivalMin] of bestArrival) {
+                const walkMin = destAccessMin.get(stopKey);
+                if (walkMin === undefined) continue;
+                if (arrivalMin + walkMin < bestArrivalAtDest) {
+                    bestArrivalAtDest = arrivalMin + walkMin;
+                    arrivalAt = { stopKey, walkMin };
+                }
             }
         }
-        if (direct.bike && departMinute + direct.bike.minutes < bestArrivalAtDest) {
+        if (allowBike && direct.bike && departMinute + direct.bike.minutes < bestArrivalAtDest) {
             bestArrivalAtDest = departMinute + direct.bike.minutes;
             arrivalAt = { direct: 'bike' };
         }
@@ -310,6 +325,7 @@ export function search(index, { origin, destination, date, departMinute, originA
         if (!Number.isFinite(roundResult.arrival)) continue;
         const legs = reconstruct(index, roundResult, parents, {
             origin, destination, departMinute, direct, destAccessMin,
+            allowWalk,
         });
         const signature = JSON.stringify(legs.map((leg) => [leg.type, leg.fromNode ?? leg.from, leg.toNode ?? leg.to, leg.departMinute]));
         if (seen.has(signature)) continue;
@@ -383,7 +399,9 @@ function rideCdta(index, stopIdxKey, arrivalMin, date, improve) {
 // Walk the parent chain from the arrival stop back to the origin, then emit
 // legs in forward order. Walk times accumulate forward; ride times come from
 // the stored via (exact, since the search knew the trip it boarded).
-function reconstruct(index, roundResult, parents, { origin, destination, departMinute, direct, destAccessMin }) {
+function reconstruct(index, roundResult, parents, {
+    origin, destination, departMinute, direct, destAccessMin, allowWalk = true,
+}) {
     const nodes = index.nodes;
 
     // Pure walk or bike itinerary: a single leg, no stops involved.
@@ -448,7 +466,7 @@ function reconstruct(index, roundResult, parents, { origin, destination, departM
 
     // Final walk from the last stop to the destination.
     const lastStopKey = roundResult.arrivalAt.stopKey;
-    const finalWalk = destAccessMin.get(lastStopKey);
+    const finalWalk = allowWalk ? destAccessMin.get(lastStopKey) : undefined;
     if (finalWalk !== undefined && Number.isFinite(finalWalk)) {
         const fromPoint = nodes.get(lastStopKey);
         legs.push({

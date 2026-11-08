@@ -65,7 +65,8 @@ export function initJourneyUi({ map, apiBase, mapboxToken }) {
         'journey-open', 'journey-close', 'journey-retry',
         'journey-set-origin', 'journey-set-destination', 'journey-search',
         'journey-when', 'journey-date', 'journey-panel', 'journey-hint',
-        'journey-results',
+        'journey-results', 'journey-mode-walk', 'journey-mode-bike',
+        'journey-mode-shuttle', 'journey-mode-bus',
     ];
     const missingIds = requiredIds.filter((id) => !document.getElementById(id));
     if (missingIds.length > 0) {
@@ -90,6 +91,11 @@ export function initJourneyUi({ map, apiBase, mapboxToken }) {
         // A manual time change should search again if both ends are set.
         if (state.origin && state.destination) runSearch();
     });
+    for (const id of ['journey-mode-walk', 'journey-mode-bike', 'journey-mode-shuttle', 'journey-mode-bus']) {
+        $(id).addEventListener('change', () => {
+            if (state.origin && state.destination) runSearch();
+        });
+    }
 
     map.on('click', onMapClick);
     state.resultLayers.addTo(map);
@@ -267,9 +273,11 @@ async function runSearch() {
         const destAccess = findWalkAccess(state.bundle, state.destination, ACCESS_RADIUS_M);
         const walkOverride = await mapboxWalkOverride(state.origin, state.destination);
         const bikeAccess = await mapboxBikeAccess(state.origin, state.destination);
+        const modes = getSelectedModes();
         const direct = buildDirectOptions(
             state.bundle, state.origin, state.destination, walkOverride, bikeAccess,
         );
+        if (!modes.bike) delete direct.bike;
         if (direct.bike) {
             direct.bike.geometry = await mapboxBikeGeometry(
                 state.origin, state.destination, direct.bike.docks,
@@ -288,17 +296,27 @@ async function runSearch() {
             originAccess: upgradedOriginAccess,
             destAccess: upgradedDestAccess,
             direct,
+            modes,
         });
 
         renderItineraries(itineraries);
         $('journey-hint').textContent = itineraries.length
             ? `${itineraries.length} option${itineraries.length === 1 ? '' : 's'} found`
-            : 'No itinerary found — try a nearer stop or another time.';
+            : 'No paths found.';
     } catch (error) {
         $('journey-hint').textContent = `Search failed: ${describeError(error)}`;
     } finally {
         state.searching = false;
         updateControls();
+    }
+
+    function getSelectedModes() {
+        return {
+            walk: true,
+            bike: $('journey-mode-bike').checked,
+            shuttle: $('journey-mode-shuttle').checked,
+            bus: $('journey-mode-bus').checked,
+        };
     }
 }
 
@@ -439,6 +457,15 @@ function renderItineraries(itineraries) {
     clearResults();
     const list = $('journey-results');
     list.replaceChildren();
+
+    if (itineraries.length === 0) {
+        selectItineraryOverlays({legs: []});
+        const empty = document.createElement('p');
+        empty.className = 'journey-empty';
+        empty.textContent = 'No paths found.';
+        list.append(empty);
+        return;
+    }
 
     itineraries.forEach((itinerary, index) => {
         const card = document.createElement('article');
