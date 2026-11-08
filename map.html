@@ -53,6 +53,13 @@
             <input id="journey-when" type="time" value="12:00">
             <input id="journey-date" type="date">
         </label>
+        <fieldset class="journey-modes">
+            <legend>Modes</legend>
+            <label><input id="journey-mode-walk" type="checkbox" checked disabled> Walk</label>
+            <label><input id="journey-mode-bike" type="checkbox" checked> Bike</label>
+            <label><input id="journey-mode-shuttle" type="checkbox" checked> Shuttle</label>
+            <label><input id="journey-mode-bus" type="checkbox" checked> CDTA bus</label>
+        </fieldset>
         <button id="journey-search" type="button" class="journey-search-btn">Find routes</button>
         <p id="journey-hint" role="status">Click the map to set origin, then destination.</p>
         <button id="journey-retry" type="button" hidden>Retry loading schedules</button>

@@ -27,6 +27,7 @@ const OUT = path.join(ROOT, 'planner', 'planner-data.json');
 // Tunables, kept as named constants so the trade-offs are visible.
 const TRANSFER_WALK_M = 250;      // max walk between two stops to count as a transfer
 const WALK_M_PER_MIN = 75;        // ~4.5 km/h; estimates footpath minutes (not drawn legs)
+const STREET_FACTOR = 1.45;       // straight-line distance underestimates street walks
 const BIKE_MIN_PER_KM = 5;        // ~12 km/h; estimates dock-to-dock ride minutes
 
 const readJson = async (rel) => JSON.parse(await readFile(path.join(ROOT, rel), 'utf8'));
@@ -409,7 +410,7 @@ function buildFootpaths(shuttle, cdta) {
             const b = allStops[j];
             const meters = haversineMeters([a.lat, a.lon], [b.lat, b.lon]);
             if (meters > TRANSFER_WALK_M) continue;
-            const minutes = Math.max(1, Math.round(meters / WALK_M_PER_MIN));
+            const minutes = Math.max(1, Math.round(meters * STREET_FACTOR / WALK_M_PER_MIN));
             footpaths.push({ from: `${a.kind}:${a.id}`, to: `${b.kind}:${b.id}`, meters: Math.round(meters), minutes });
             footpaths.push({ from: `${b.kind}:${b.id}`, to: `${a.kind}:${a.id}`, meters: Math.round(meters), minutes });
         }
@@ -443,7 +444,7 @@ async function main() {
         cdta,
         docks,
         footpaths,
-        config: { TRANSFER_WALK_M, WALK_M_PER_MIN, BIKE_MIN_PER_KM },
+        config: { TRANSFER_WALK_M, WALK_M_PER_MIN, STREET_FACTOR, BIKE_MIN_PER_KM },
     };
 
     await mkdir(path.dirname(OUT), { recursive: true });

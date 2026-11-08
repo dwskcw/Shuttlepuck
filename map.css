@@ -244,6 +244,19 @@ html, body { height: 100%; margin: 0; }
     padding: 5px; border: 1px solid #b8c3cf; border-radius: 4px; background: #fff; font: inherit;
 }
 .journey-field input + input { margin-top: 6px; }
+.journey-modes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin: 0 0 8px;
+    padding: 6px 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 12px;
+}
+.journey-modes legend { padding: 0 3px; color: #64748b; }
+.journey-modes label { display: flex; align-items: center; gap: 4px; }
+.journey-modes input { margin: 0; }
 
 .journey-search-btn {
     width: 100%;
@@ -273,6 +286,7 @@ html, body { height: 100%; margin: 0; }
 #journey-hint { margin: 8px 0 0; color: #555; font-size: 12px; }
 
 #journey-results { overflow-y: auto; min-height: 0; margin-top: 8px; padding-right: 3px; }
+.journey-empty { margin: 10px 0 4px; color: #64748b; font-size: 13px; text-align: center; }
 .journey-option { border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px; background: #fff; }
 .journey-option.selected { border-color: #2563eb; box-shadow: 0 0 0 1px #2563eb; }
 .journey-option-head {
