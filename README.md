@@ -51,4 +51,4 @@ node --env-file=.env dev-server.mjs                # enables /api/db/* read endp
 
 (Equivalently, `psql "$TIGER_DATABASE_URL" -f db/schema.sql` applies the schema if you prefer psql. The loader refuses to run before the schema exists and tells you so.)
 
-With credentials set, `GET /api/db/shuttle-travel-times` serves the hour-by-hour travel-time table and `GET /api/db/shuttle-activity?hours=2` the recent pings-per-minute sparkline data — the demo line for judges: *"the planner knows how long the shuttle actually takes to downtown at this hour, because it has been watching."* Without credentials everything still works from local JSON; the map degrades gracefully.
+With credentials set, `GET /api/db/shuttle-travel-times` serves the hour-by-hour travel-time table and `GET /api/db/shuttle-activity?hours=2` the recent pings-per-minute sparkline data. Support for the local JSON data is still provided when credentials are absent.
