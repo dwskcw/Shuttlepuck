@@ -179,6 +179,19 @@ html, body { height: 100%; margin: 0; }
 .journey-endpoint:hover { border-color: #2563eb; }
 .journey-endpoint.set { border-color: #16a34a; color: #166534; }
 .journey-endpoint.armed { border-color: #2563eb; background: #eff6ff; }
+.journey-location-btn {
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 6px 8px;
+    border: 1px solid #b8c3cf;
+    border-radius: 6px;
+    background: #fff;
+    color: #1d4ed8;
+    cursor: pointer;
+    font: inherit;
+}
+.journey-location-btn:hover { border-color: #2563eb; background: #eff6ff; }
+.journey-location-btn:disabled { color: #64748b; cursor: default; }
 
 .journey-field { display: block; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-bottom: 8px; }
 .journey-field input {
@@ -239,9 +252,18 @@ html, body { height: 100%; margin: 0; }
 .journey-time { font-weight: 700; white-space: nowrap; }
 .journey-badges { display: flex; align-items: center; gap: 3px; flex: 1; min-width: 0; flex-wrap: wrap; }
 .journey-arrow { color: #94a3b8; }
-.journey-chip {
-    padding: 1px 5px; border-radius: 3px; color: #fff; font-size: 11px; font-weight: 600;
-    max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+.journey-step-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    color: #334155; font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.journey-step-number, .journey-leg-number {
+    display: inline-flex; align-items: center; justify-content: center;
+    flex: none; width: 18px; height: 18px; box-sizing: border-box;
+    border-radius: 50%; background: #1e293b; color: #fff;
+    font-size: 10px; font-weight: 700;
+}
+.journey-leg-number {
+    margin-right: 6px; vertical-align: middle;
 }
 .journey-total { font-size: 11px; color: #667085; white-space: nowrap; }
 
@@ -280,6 +302,15 @@ html, body { height: 100%; margin: 0; }
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
+}
+.journey-step-marker { background: transparent; border: 0; }
+.journey-step-marker span {
+    display: flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; box-sizing: border-box;
+    border: 3px solid #fff; border-radius: 50%;
+    background: #1e293b; color: #fff;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, .55);
+    font: 700 13px/1 system-ui, sans-serif;
 }
 
 /* Keep the map usable on phones: the planner becomes a compact bottom sheet

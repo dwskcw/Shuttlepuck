@@ -35,6 +35,7 @@ const state = {
     mapboxToken: null,   // from map.js config
     active: false,       // panel open?
     armed: null,         // 'origin' | 'destination' while awaiting a map click
+    locating: false,     // a browser geolocation request is in flight
     searching: false,    // a search request is in flight
     origin: null,        // {lat, lon, label}
     destination: null,   // {lat, lon, label}
@@ -64,6 +65,7 @@ export function initJourneyUi({ map, apiBase, mapboxToken }) {
     const requiredIds = [
         'journey-open', 'journey-close', 'journey-retry',
         'journey-set-origin', 'journey-set-destination', 'journey-search',
+        'journey-use-location',
         'journey-when', 'journey-date', 'journey-panel', 'journey-hint',
         'journey-results', 'journey-mode-bike', 'journey-mode-shuttle',
         'journey-mode-bus',
@@ -86,6 +88,7 @@ export function initJourneyUi({ map, apiBase, mapboxToken }) {
     });
     $('journey-set-origin').addEventListener('click', () => armClick('origin'));
     $('journey-set-destination').addEventListener('click', () => armClick('destination'));
+    $('journey-use-location').addEventListener('click', useCurrentLocation);
     $('journey-search').addEventListener('click', runSearch);
     $('journey-when').addEventListener('change', () => {
         // A manual time change should search again if both ends are set.
@@ -176,6 +179,7 @@ function updateControls() {
     const destBtn = $('journey-set-destination');
     const searchBtn = $('journey-search');
     const hint = $('journey-hint');
+    const locationButton = $('journey-use-location');
 
     originBtn.textContent = state.origin ? 'Origin set' : '1. Set origin';
     destBtn.textContent = state.destination ? 'Destination set' : '2. Set destination';
@@ -187,6 +191,11 @@ function updateControls() {
     const ready = Boolean(state.bundle && state.origin && state.destination);
     searchBtn.disabled = !ready || state.searching;
     searchBtn.textContent = state.searching ? 'Searching…' : 'Find routes';
+    const locationTarget = state.armed ?? (!state.origin ? 'origin' : 'destination');
+    locationButton.textContent = state.searching
+        ? 'Use my location'
+        : `Use my location for ${locationTarget}`;
+    locationButton.disabled = state.searching || state.locating;
 
     $('journey-retry').hidden = !state.bundleError;
 
@@ -204,9 +213,43 @@ function updateControls() {
     } else if (!state.searching) {
         hint.textContent = 'Ready — press “Find routes”.';
     }
+
 }
 
 // --------------------------------------------------------------- input
+function useCurrentLocation() {
+    if (!navigator.geolocation) {
+        $('journey-hint').textContent = 'This browser does not support device location.';
+        return;
+    }
+
+    const which = state.armed ?? (!state.origin ? 'origin' : 'destination');
+    state.locating = true;
+    $('journey-hint').textContent = 'Requesting your device location…';
+    updateControls();
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const latlng = [position.coords.latitude, position.coords.longitude];
+            state.locating = false;
+            state.armed = null;
+            setEndpoint(which, latlng);
+            state.map.setView(latlng, Math.max(state.map.getZoom(), 16));
+        },
+        (error) => {
+            state.locating = false;
+            const reason = error.code === error.PERMISSION_DENIED
+                ? 'Location permission was denied.'
+                : error.code === error.POSITION_UNAVAILABLE
+                    ? 'Your device could not determine its location.'
+                    : 'Location lookup timed out.';
+            $('journey-hint').textContent = reason;
+            updateControls();
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
+    );
+}
+
 function armClick(which) {
     state.armed = state.armed === which ? null : which; // toggle off on re-click
     updateControls();
@@ -476,14 +519,15 @@ function renderItineraries(itineraries) {
         const header = document.createElement('button');
         header.type = 'button';
         header.className = 'journey-option-head';
-        const badges = itinerary.legs.map((leg) => {
-            if (leg.type === 'walk') return '🚶';
-            if (leg.type === 'bike') return '🚲';
-            if (leg.type === 'shuttle') return `<span class="journey-chip" style="background:${leg.color}">Shuttle</span>`;
-            return `<span class="journey-chip" style="background:${leg.color}">${escapeHtml(leg.routeShort)}</span>`;
-            }).join('<span class="journey-arrow">&gt;</span>');
+        const badges = itinerary.legs.map((leg, legIndex) =>
+            `<span class="journey-step-badge" title="${modeLabel(leg)}">
+                <span class="journey-step-number">${legIndex + 1}</span>
+                <span>${modeLabel(leg)}</span>
+            </span>`
+        ).join('<span class="journey-arrow">&gt;</span>');
         header.innerHTML = `
             <span class="journey-time">${formatClock(itinerary.departure)} – ${formatClock(itinerary.arrival)}</span>
+            <span class="journey-badges">${badges}</span>
             <span class="journey-total">${formatClock(itinerary.departure)} departure</span>`;
         header.addEventListener('click', () => {
             selectItineraryOverlays(itinerary);
@@ -496,9 +540,9 @@ function renderItineraries(itineraries) {
         // Leg-by-leg detail, always visible (it is short).
         const detail = document.createElement('ul');
         detail.className = 'journey-legs';
-        for (const leg of itinerary.legs) {
+        for (const [legIndex, leg] of itinerary.legs.entries()) {
             const item = document.createElement('li');
-            item.innerHTML = legLine(leg);
+            item.innerHTML = `<span class="journey-leg-number">${legIndex + 1}</span>${legLine(leg)}`;
             detail.append(item);
         }
         card.append(detail);
@@ -510,6 +554,13 @@ function renderItineraries(itineraries) {
         drawItinerary(itineraries[0]);
         list.firstElementChild?.classList.add('selected');
     }
+}
+
+function modeLabel(leg) {
+    if (leg.type === 'walk') return 'Walk';
+    if (leg.type === 'bike') return 'Bike';
+    if (leg.type === 'shuttle') return 'Shuttle';
+    return 'Bus';
 }
 
 function selectItineraryOverlays(itinerary) {
@@ -560,7 +611,22 @@ async function drawItinerary(itinerary) {
     const transitGeometries = await Promise.all(transitLegs.map((leg) => getTransitGeometry(leg)));
     if (drawVersion !== state.drawVersion) return;
 
-    for (const leg of itinerary.legs) {
+    function addStepMarker(coords, legIndex, leg) {
+        if (!coords) return;
+        new Marker(coords, {
+            icon: new DivIcon({
+                className: 'journey-step-marker',
+                html: `<span>${legIndex + 1}</span>`,
+                iconSize: [28, 28],
+                iconAnchor: [14, 14],
+            }),
+            title: `Step ${legIndex + 1}: ${modeLabel(leg)}`,
+            zIndexOffset: 1500,
+            interactive: false,
+        }).addTo(state.resultLayers);
+    }
+
+    for (const [legIndex, leg] of itinerary.legs.entries()) {
         if (leg.type === 'walk' || leg.type === 'bike') {
             const from = leg.fromPoint
                 ? [leg.fromPoint.lat, leg.fromPoint.lon]
@@ -570,13 +636,15 @@ async function drawItinerary(itinerary) {
                 : endpointCoords(leg.to);
             const geometry = leg.geometry ?? walkGeometries[walkLegs.indexOf(leg)];
             if (from && to) {
-                const walkingLine = new Polyline(geometry ?? [from, to], {
+                const lineGeometry = geometry?.length ? geometry : [from, to];
+                const walkingLine = new Polyline(lineGeometry, {
                     color: leg.type === 'bike' ? '#1a9641' : '#555555',
                     weight: 3, dashArray: '2 8', opacity: 0.9,
                 }).addTo(state.resultLayers);
                 if (leg.type === 'walk') {
-                    addWalkingPathHandle(walkingLine, leg, geometry ?? [from, to]);
+                    addWalkingPathHandle(walkingLine, leg, lineGeometry);
                 }
+                addStepMarker(lineGeometry[0], legIndex, leg);
                 bounds.push(from, to);
             }
             continue;
@@ -585,6 +653,8 @@ async function drawItinerary(itinerary) {
         // Transit legs: draw the vehicle's real geometry between the two stops.
         const transitIndex = transitLegs.indexOf(leg);
         const points = transitGeometries[transitIndex] ?? [];
+        const from = nodeCoords(state.bundle, leg.fromNode);
+        const to = nodeCoords(state.bundle, leg.toNode);
         if (points.length > 1) {
             new Polyline(points, {
                 color: '#ffffff', weight: 7, opacity: 0.85, lineCap: 'round',
@@ -594,11 +664,13 @@ async function drawItinerary(itinerary) {
                 lineCap: 'round',
             }).addTo(state.resultLayers);
             bounds.push(...points);
+            addStepMarker(points[0], legIndex, leg);
         }
-        const from = nodeCoords(state.bundle, leg.fromNode);
-        const to = nodeCoords(state.bundle, leg.toNode);
         if (!from || !to) continue;
         bounds.push([from.lat, from.lon], [to.lat, to.lon]);
+        if (points.length <= 1) {
+            addStepMarker([from.lat, from.lon], legIndex, leg);
+        }
         for (const [coords, kind] of [[from, 'board'], [to, 'alight']]) {
             new CircleMarker([coords.lat, coords.lon], {
                 radius: 6, color: '#ffffff', weight: 2,
