@@ -22,6 +22,7 @@ import { previousDate, serviceRuns, shuttleDayType } from './time.js';
 
 const MAX_ROUNDS = 3;           // rounds = max vehicles used (walk → bus → shuttle)
 const MAX_CANDIDATE_TRIPS = 40; // per pattern, safety cap when scanning departures
+const MAX_SHUTTLE_WAIT_MINUTES = 20;
 const WALK_M_PER_MIN = 75;      // ~4.5 km/h street walking (estimates only)
 const BIKE_M_PER_MIN = 200;     // ~12 km/h riding speed for dock-to-dock estimates
 const DOCK_ACCESS_M = 600;      // max walk to grab/leave a shared bike
@@ -203,7 +204,7 @@ function earliestCdtaTrip(bundle, pattern, offset, date, fromMinute) {
 // Earliest shuttle boarding per route at a stop at/after fromMinute. A stop
 // can be served by both loops, and the fastest overall departure is not always
 // the best ride, so return one boarding per route.
-function shuttleBoardings(index, stopKey, date, fromMinute) {
+function shuttleBoardings(index, stopKey, date, fromMinute, maxWaitMinutes) {
     const byDayType = index.shuttleDeps.get(stopKey);
     if (!byDayType) return [];
     const yesterday = previousDate(date);
@@ -214,8 +215,13 @@ function shuttleBoardings(index, stopKey, date, fromMinute) {
         for (const { route, dep } of byDayType[dayType]) {
             const adjusted = dep - dayShift * 1440; // yesterday's late trips
             if (adjusted < fromMinute || boardedRoutes.has(route)) continue;
+            if (adjusted - fromMinute > maxWaitMinutes) continue;
             boardedRoutes.add(route);
-            boardings.push({ route, dep: adjusted });
+            boardings.push({
+                route,
+                dep: adjusted,
+                waitMinutes: adjusted - fromMinute,
+            });
         }
     };
 
@@ -338,8 +344,103 @@ export function search(index, {
                 legs.filter((leg) => leg.type === 'shuttle' || leg.type === 'bus').length - 1),
         });
     }
+
+    // Keep a useful shuttle option even when walking reaches the destination
+    // sooner. These direct shuttle alternatives are limited to a reasonable
+    // wait at the boarding stop and retain the same earliest-arrival options.
+    if (allowShuttle) {
+        for (const itinerary of findShuttleAlternatives(index, {
+            origin, destination, date, departMinute, originAccess, destAccess,
+        })) {
+            const signature = JSON.stringify(itinerary.legs.map((leg) =>
+                [leg.type, leg.fromNode ?? leg.from, leg.toNode ?? leg.to, leg.departMinute]));
+            if (seen.has(signature)) continue;
+            seen.add(signature);
+            itineraries.push(itinerary);
+        }
+    }
+
     itineraries.sort((a, b) => a.arrival - b.arrival);
     return itineraries;
+}
+
+function findShuttleAlternatives(index, {
+    origin, destination, date, departMinute, originAccess, destAccess,
+}) {
+    const destinationAccess = new Map(
+        destAccess.map((access) => [access.nodeKey, access.minutes]),
+    );
+    const bestByRoute = new Map();
+
+    for (const access of originAccess) {
+        if (!access.nodeKey.startsWith('shuttle:')) continue;
+        const stopKey = access.nodeKey;
+        const arrivalAtStop = departMinute + access.minutes;
+        const rawStopKey = stopKey.slice('shuttle:'.length);
+        const stop = index.bundle.shuttle.stops.find((candidate) =>
+            candidate.key === rawStopKey);
+        if (!stop) continue;
+
+        for (const boarding of shuttleBoardings(
+            index, rawStopKey, date, arrivalAtStop, MAX_SHUTTLE_WAIT_MINUTES,
+        )) {
+            const routeStops = index.bundle.shuttle.stops
+                .filter((candidate) => candidate.offsets[boarding.route] !== undefined)
+                .sort((a, b) => a.offsets[boarding.route] - b.offsets[boarding.route]);
+            const boardingOffset = stop.offsets[boarding.route];
+
+            for (const alightStop of routeStops) {
+                if (alightStop.offsets[boarding.route] <= boardingOffset) continue;
+                const alightKey = `shuttle:${alightStop.key}`;
+                const finalWalkMinutes = destinationAccess.get(alightKey);
+                if (finalWalkMinutes === undefined) continue;
+
+                const arriveMinute = boarding.dep
+                    + (alightStop.offsets[boarding.route] - boardingOffset)
+                    + finalWalkMinutes;
+                const current = bestByRoute.get(boarding.route);
+                if (current && current.arrival <= arriveMinute) continue;
+
+                const walkToStop = {
+                    type: 'walk',
+                    from: origin.label ?? 'Origin',
+                    to: stop.name,
+                    minutes: access.minutes,
+                    departMinute,
+                    arriveMinute: arrivalAtStop,
+                    fromPoint: { lat: origin.lat, lon: origin.lon },
+                    toPoint: { lat: stop.lat, lon: stop.lon },
+                };
+                const shuttle = rideLeg(index, {
+                    kind: 'shuttle',
+                    route: boarding.route,
+                    fromNode: stopKey,
+                    toNode: alightKey,
+                    departMinute: boarding.dep,
+                    arriveMinute: boarding.dep
+                        + (alightStop.offsets[boarding.route] - boardingOffset),
+                    waitMinutes: boarding.waitMinutes,
+                });
+                const finalWalk = {
+                    type: 'walk',
+                    from: alightStop.name,
+                    to: destination.label ?? 'Destination',
+                    minutes: finalWalkMinutes,
+                    departMinute: shuttle.arriveMinute,
+                    arriveMinute,
+                    fromPoint: { lat: alightStop.lat, lon: alightStop.lon },
+                    toPoint: { lat: destination.lat, lon: destination.lon },
+                };
+                bestByRoute.set(boarding.route, {
+                    legs: [walkToStop, shuttle, finalWalk],
+                    departure: departMinute,
+                    arrival: arriveMinute,
+                    transfers: 0,
+                });
+            }
+        }
+    }
+    return [...bestByRoute.values()];
 }
 
 // Ride phase for one shuttle stop: board the earliest departure of each route
@@ -351,7 +452,9 @@ function rideShuttle(index, stopKey, arrivalMin, date, improve) {
     const stop = bundle.shuttle.stops.find((s) => s.key === rawKey);
     if (!stop) return;
 
-    for (const boarding of shuttleBoardings(index, rawKey, date, arrivalMin)) {
+    for (const boarding of shuttleBoardings(
+        index, rawKey, date, arrivalMin, MAX_SHUTTLE_WAIT_MINUTES,
+    )) {
         const routeStops = bundle.shuttle.stops
             .filter((s) => s.offsets[boarding.route] !== undefined)
             .sort((a, b) => a.offsets[boarding.route] - b.offsets[boarding.route]);
@@ -365,6 +468,7 @@ function rideShuttle(index, stopKey, arrivalMin, date, improve) {
                     type: 'ride', kind: 'shuttle', route: boarding.route,
                     fromNode: stopKey, toNode: `shuttle:${later.key}`,
                     departMinute: boarding.dep, arriveMinute: arrive,
+                    waitMinutes: boarding.waitMinutes,
                 },
             });
         }
@@ -480,7 +584,22 @@ function reconstruct(index, roundResult, parents, {
             toPoint: { lat: destination.lat, lon: destination.lon },
         });
     }
-    return legs;
+
+    const mergedLegs = [];
+    for (const leg of legs) {
+        const previous = mergedLegs.at(-1);
+        if (previous?.type === 'walk'
+            && leg.type === 'walk'
+            && previous.arriveMinute === leg.departMinute) {
+            previous.to = leg.to;
+            previous.minutes += leg.minutes;
+            previous.arriveMinute = leg.arriveMinute;
+            previous.toPoint = leg.toPoint;
+        } else {
+            mergedLegs.push(leg);
+        }
+    }
+    return mergedLegs;
 }
 
 // Build one transit leg descriptor from a ride via pointer.
@@ -501,6 +620,7 @@ function rideLeg(index, via) {
             toNode: via.toNode,
             departMinute: via.departMinute,
             arriveMinute: via.arriveMinute,
+            waitMinutes: via.waitMinutes,
         };
     }
     const pattern = index.bundle.cdta.patterns[via.patternIdx];

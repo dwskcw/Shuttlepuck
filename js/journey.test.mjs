@@ -104,6 +104,47 @@ test('rides the shuttle and arrives at downstream stops', () => {
     assert.equal(best.arrival, 600 + 10 + 1);   // ride 10 min, then 1 min walk
 });
 
+test('keeps a shuttle alternative with up to 20 minutes of waiting', () => {
+    const bundle = syntheticBundle();
+    const origin = { lat: 0, lon: 0, label: 'Origin' };
+    const destination = { lat: 0, lon: 0.0036, label: 'Destination' };
+    const itineraries = run(bundle, {
+        origin,
+        destination,
+        date: WEEKDAY,
+        departMinute: 9 * 60 + 48,
+        originAccess: [{ nodeKey: 'shuttle:A0', minutes: 1 }],
+        destAccess: [{ nodeKey: 'shuttle:A2', minutes: 1 }],
+        direct: { walk: { minutes: 10 } },
+    });
+
+    assert.ok(itineraries.some((itinerary) =>
+        itinerary.legs.length === 1 && itinerary.legs[0].type === 'walk'));
+    const shuttleItinerary = itineraries.find((itinerary) =>
+        itinerary.legs.some((leg) => leg.type === 'shuttle'));
+    assert.ok(shuttleItinerary, 'expected a slower shuttle alternative');
+    const shuttle = shuttleItinerary.legs.find((leg) => leg.type === 'shuttle');
+    assert.equal(shuttle.waitMinutes, 11);
+    assert.equal(shuttleItinerary.departure, 9 * 60 + 48);
+    assert.equal(shuttleItinerary.arrival, 600 + 10 + 1);
+});
+
+test('does not offer a shuttle requiring more than 20 minutes of waiting', () => {
+    const bundle = syntheticBundle();
+    const itineraries = run(bundle, {
+        origin: { lat: 0, lon: 0, label: 'Origin' },
+        destination: { lat: 0, lon: 0.0036, label: 'Destination' },
+        date: WEEKDAY,
+        departMinute: 9 * 60 + 35,
+        originAccess: [{ nodeKey: 'shuttle:A0', minutes: 1 }],
+        destAccess: [{ nodeKey: 'shuttle:A2', minutes: 1 }],
+        direct: { walk: { minutes: 10 } },
+    });
+
+    assert.ok(!itineraries.some((itinerary) =>
+        itinerary.legs.some((leg) => leg.type === 'shuttle')));
+});
+
 test('chains shuttle -> footpath -> bus with wait time', () => {
     const bundle = syntheticBundle();
     const originAccess = [{ nodeKey: 'shuttle:A0', minutes: 1 }];
@@ -123,6 +164,36 @@ test('chains shuttle -> footpath -> bus with wait time', () => {
     assert.equal(busLeg.departMinute, 615);
     assert.equal(busLeg.arriveMinute, 627);
     assert.equal(chained.transfers, 1);
+});
+
+test('combines consecutive access and footpath walks into one leg', () => {
+    const bundle = syntheticBundle();
+    bundle.footpaths.push(
+        { from: 'shuttle:A0', to: 'cdta:0', minutes: 3 },
+        { from: 'cdta:0', to: 'shuttle:A1', minutes: 4 },
+    );
+    const origin = { lat: 0, lon: 0, label: 'Origin' };
+    const destination = { lat: 0, lon: 0.0018, label: 'Destination' };
+    const itineraries = run(bundle, {
+        origin,
+        destination,
+        date: WEEKDAY,
+        departMinute: 9 * 60,
+        originAccess: [{ nodeKey: 'shuttle:A0', minutes: 2 }],
+        destAccess: [{ nodeKey: 'shuttle:A1', minutes: 5 }],
+        direct: {},
+        modes: { shuttle: false, bus: false },
+    });
+
+    const itinerary = itineraries[0];
+    assert.ok(itinerary, 'expected a walking itinerary');
+    assert.equal(itinerary.legs.length, 1);
+    assert.deepEqual(
+        [itinerary.legs[0].from, itinerary.legs[0].to, itinerary.legs[0].minutes],
+        ['Origin', 'Destination', 12],
+    );
+    assert.equal(itinerary.legs[0].departMinute, 9 * 60);
+    assert.equal(itinerary.legs[0].arriveMinute, 9 * 60 + 12);
 });
 
 test('missed connection waits for the next scheduled trip', () => {

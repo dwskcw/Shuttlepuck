@@ -65,8 +65,8 @@ export function initJourneyUi({ map, apiBase, mapboxToken }) {
         'journey-open', 'journey-close', 'journey-retry',
         'journey-set-origin', 'journey-set-destination', 'journey-search',
         'journey-when', 'journey-date', 'journey-panel', 'journey-hint',
-        'journey-results', 'journey-mode-walk', 'journey-mode-bike',
-        'journey-mode-shuttle', 'journey-mode-bus',
+        'journey-results', 'journey-mode-bike', 'journey-mode-shuttle',
+        'journey-mode-bus',
     ];
     const missingIds = requiredIds.filter((id) => !document.getElementById(id));
     if (missingIds.length > 0) {
@@ -91,7 +91,7 @@ export function initJourneyUi({ map, apiBase, mapboxToken }) {
         // A manual time change should search again if both ends are set.
         if (state.origin && state.destination) runSearch();
     });
-    for (const id of ['journey-mode-walk', 'journey-mode-bike', 'journey-mode-shuttle', 'journey-mode-bus']) {
+    for (const id of ['journey-mode-bike', 'journey-mode-shuttle', 'journey-mode-bus']) {
         $(id).addEventListener('change', () => {
             if (state.origin && state.destination) runSearch();
         });
@@ -113,9 +113,11 @@ export function initJourneyUi({ map, apiBase, mapboxToken }) {
 
 function openPanel() {
     state.active = true;
+    state.armed = 'origin';
     $('journey-panel').hidden = false;
     $('journey-open').hidden = true;
     document.body.classList.add('journey-active');
+    updateControls();
     loadBundleOnce();
 }
 
@@ -198,7 +200,7 @@ function updateControls() {
     } else if (state.armed) {
         hint.textContent = `Now click the map to place the ${state.armed}.`;
     } else if (!state.origin || !state.destination) {
-        hint.textContent = 'Click “Set origin”, then click the map. Repeat for the destination.';
+        hint.textContent = 'Click the map to set origin, then destination.';
     } else if (!state.searching) {
         hint.textContent = 'Ready — press “Find routes”.';
     }
@@ -256,7 +258,7 @@ async function runSearch() {
         return;
     }
     if (!state.origin || !state.destination) {
-        $('journey-hint').textContent = 'Set both endpoints first: press “Set origin”, click the map, then “Set destination”.';
+        $('journey-hint').textContent = 'Set both endpoints first by clicking the map for origin and destination.';
         return;
     }
 
@@ -482,7 +484,6 @@ function renderItineraries(itineraries) {
             }).join('<span class="journey-arrow">&gt;</span>');
         header.innerHTML = `
             <span class="journey-time">${formatClock(itinerary.departure)} – ${formatClock(itinerary.arrival)}</span>
-            <span class="journey-badges">${badges}</span>
             <span class="journey-total">${formatClock(itinerary.departure)} departure</span>`;
         header.addEventListener('click', () => {
             selectItineraryOverlays(itinerary);
@@ -528,7 +529,7 @@ function legLine(leg) {
     const time = `${formatClock(leg.departMinute)} – ${formatClock(leg.arriveMinute)}`;
     if (leg.type === 'walk') {
         return `<span class="leg-label">Walk</span>
-            <strong>${escapeHtml(leg.from)}</strong> to
+            <strong>${escapeHtml(leg.from)}</strong> to <strong>${escapeHtml(leg.to)}</strong>
             <span class="leg-meta">${leg.minutes} min walk · ${time}</span>`;
     }
     if (leg.type === 'bike') {
@@ -536,9 +537,11 @@ function legLine(leg) {
             <span class="leg-meta">${leg.minutes} min · ${time}</span>`;
     }
     if (leg.type === 'shuttle') {
+        const wait = leg.waitMinutes > 0
+            ? `Wait ${escapeHtml(String(leg.waitMinutes))} min for the ${escapeHtml(leg.routeName)} · ` : '';
         return `<span class="leg-icon" style="background:${leg.color}"></span>
             <strong>${escapeHtml(leg.routeName)}</strong> toward campus loop
-            <span class="leg-meta">${escapeHtml(String(leg.from))} to ${escapeHtml(String(leg.to))} · ${time}</span>`;
+            <span class="leg-meta">${wait}${escapeHtml(String(leg.from))} to ${escapeHtml(String(leg.to))} · ${time}</span>`;
     }
     return `<span class="leg-icon" style="background:${leg.color}"></span>
         <strong>CDTA ${escapeHtml(leg.routeShort)}</strong> to ${escapeHtml(leg.headsign ?? '')}
