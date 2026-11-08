@@ -1,22 +1,3 @@
-import {
-    LeafletMap, TileLayer, Polyline, CircleMarker, Marker, DivIcon,
-    LayerGroup, LatLngBounds
-} from 'leaflet';
-import { initJourneyUi } from './js/journey-ui.js';
-
-// ---------------------------------------------------------------
-// Config
-// ---------------------------------------------------------------
-// By default, call /api/* on the server that served this page (use with
-// dev-server.mjs, which proxies to Shubble). Set ?api=<url> to override it.
-const params = new URLSearchParams(location.search);
-const apiParam = params.get('api');
-const API_BASE = !apiParam || apiParam === 'same-origin'
-    ? ''
-    : apiParam.replace(/\/$/, '');
-const POLL_MS = 5000;            // same cadence as the Shubble frontend
-const OFF_ROUTE_COLOR = '#666666';
-
 // ---------------------------------------------------------------
 // Map + base tiles
 // ---------------------------------------------------------------
