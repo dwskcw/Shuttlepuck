@@ -119,6 +119,7 @@ export function buildDirectOptions(bundle, origin, destination, walkOverride) {
             mode: 'walk',
             minutes: walkOverride?.minutes ?? Math.max(1, Math.round(walkMeters / WALK_M_PER_MIN)),
             meters: walkMeters,
+	    geometry: walkOverride?.geometry,
         };
     }
 
@@ -385,6 +386,7 @@ function reconstruct(index, roundResult, parents, { origin, destination, departM
             to: destination.label ?? 'Destination',
             minutes: option.minutes,
             meters: option.meters,
+	    geometry: option.geometry,
             departMinute,
             arriveMinute: departMinute + option.minutes,
             docks: option.docks,

@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------
 import {
     LeafletMap, TileLayer, Polyline, CircleMarker, Marker, DivIcon,
-    LayerGroup, LatLngBounds
+    LayerGroup, LatLng, LatLngBounds
 } from 'leaflet';
 import * as Leaflet from 'leaflet';
 import { initJourneyUi } from './js/journey-ui.js';
@@ -56,11 +56,22 @@ const MAPBOX_TOKEN = 'pk.eyJ1IjoiZHdza2N3IiwiYSI6ImNtdzZyd3d3ZzBpY2IzMG9wc28weXN
 // Hand-written Mapbox URL, used only if leaflet-providers didn't load.
 const MAPBOX_TILES_URL = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/512/{z}/{x}/{y}@2x?access_token=${MAPBOX_TOKEN}`;
 
+// restrict bounds to area of CDTA bus routes
+
+// Siamese ponds wilderness
+const corner1 = new LatLng(43.588, -74.394),
+// roughly Chatham
+corner2 = new LatLng(42.421, -73.549),
+boundary = new LatLngBounds(corner1, corner2);
+
+map.setMaxBounds(boundary);
+
 // Primary base layer: Mapbox, built through leaflet-providers when
 // available so we get a maintained URL template and attribution.
 const tiles = providersAvailable
     ? new TileLayer.Provider('Mapbox.Streets', { accessToken: MAPBOX_TOKEN })
     : new TileLayer(MAPBOX_TILES_URL, {
+	bounds: boundary,
         tileSize: 512,
         zoomOffset: -1,
         maxZoom: 22,
