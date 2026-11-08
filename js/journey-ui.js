@@ -65,8 +65,8 @@ export function initJourneyUi({ map, apiBase, mapboxToken }) {
         'journey-open', 'journey-close', 'journey-retry',
         'journey-set-origin', 'journey-set-destination', 'journey-search',
         'journey-when', 'journey-date', 'journey-panel', 'journey-hint',
-        'journey-results', 'journey-mode-walk', 'journey-mode-bike',
-        'journey-mode-shuttle', 'journey-mode-bus',
+        'journey-results', 'journey-mode-bike', 'journey-mode-shuttle',
+        'journey-mode-bus',
     ];
     const missingIds = requiredIds.filter((id) => !document.getElementById(id));
     if (missingIds.length > 0) {
@@ -91,7 +91,7 @@ export function initJourneyUi({ map, apiBase, mapboxToken }) {
         // A manual time change should search again if both ends are set.
         if (state.origin && state.destination) runSearch();
     });
-    for (const id of ['journey-mode-walk', 'journey-mode-bike', 'journey-mode-shuttle', 'journey-mode-bus']) {
+    for (const id of ['journey-mode-bike', 'journey-mode-shuttle', 'journey-mode-bus']) {
         $(id).addEventListener('change', () => {
             if (state.origin && state.destination) runSearch();
         });
@@ -113,9 +113,11 @@ export function initJourneyUi({ map, apiBase, mapboxToken }) {
 
 function openPanel() {
     state.active = true;
+    state.armed = 'origin';
     $('journey-panel').hidden = false;
     $('journey-open').hidden = true;
     document.body.classList.add('journey-active');
+    updateControls();
     loadBundleOnce();
 }
 
@@ -198,7 +200,7 @@ function updateControls() {
     } else if (state.armed) {
         hint.textContent = `Now click the map to place the ${state.armed}.`;
     } else if (!state.origin || !state.destination) {
-        hint.textContent = 'Click “Set origin”, then click the map. Repeat for the destination.';
+        hint.textContent = 'Click the map to set origin, then destination.';
     } else if (!state.searching) {
         hint.textContent = 'Ready — press “Find routes”.';
     }
@@ -256,7 +258,7 @@ async function runSearch() {
         return;
     }
     if (!state.origin || !state.destination) {
-        $('journey-hint').textContent = 'Set both endpoints first: press “Set origin”, click the map, then “Set destination”.';
+        $('journey-hint').textContent = 'Set both endpoints first by clicking the map for origin and destination.';
         return;
     }
 
