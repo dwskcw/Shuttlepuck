@@ -18,6 +18,8 @@
 // Assumptions are documented inline where they are made.
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import readline from 'node:readline';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -57,16 +59,40 @@ function parseCsvLine(line) {
     return values;
 }
 
-async function readGtfs(name) {
-    const text = await readFile(path.join(ROOT, 'data', 'gtfs', name), 'utf8');
-    const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter((line) => line.length > 0);
-    const headers = parseCsvLine(lines[0]);
-    return lines.slice(1).map((line) => {
-        const values = parseCsvLine(line);
-        const row = {};
-        headers.forEach((header, i) => { row[header] = values[i]; });
-        return row;
+// Stream a GTFS csv file, invoking onRow for each parsed row. Rows are
+// short-lived, so peak memory stays bounded even for stop_times.txt (the
+// largest file by far). This replaces the old read-everything-into-an-array
+// helper, which OOMed on real-world feeds.
+//
+// Pass wantedColumns to build rows with only the fields you need — handy for
+// stop_times.txt, where a full row is ~10 fields but we only use four.
+async function forEachGtfsRow(name, onRow, wantedColumns = null) {
+    const filePath = path.join(ROOT, 'data', 'gtfs', name);
+    const rl = readline.createInterface({
+        input: createReadStream(filePath, { encoding: 'utf8' }),
+        crlfDelay: Infinity,
     });
+    let headers = null;
+    let indices = null;
+    for await (const rawLine of rl) {
+        const line = rawLine.replace(/^\uFEFF/, '');
+        if (line.length === 0) continue;
+        const values = parseCsvLine(line);
+        if (headers === null) {
+            headers = values;
+            if (wantedColumns) indices = wantedColumns.map((col) => headers.indexOf(col));
+            continue;
+        }
+        if (indices) {
+            const row = {};
+            for (let i = 0; i < wantedColumns.length; i++) row[wantedColumns[i]] = values[indices[i]];
+            onRow(row);
+        } else {
+            const row = {};
+            for (let i = 0; i < headers.length; i++) row[headers[i]] = values[i];
+            onRow(row);
+        }
+    }
 }
 
 // Great-circle distance in meters. Good enough for walking-threshold
@@ -236,17 +262,10 @@ function round5(value) {
 }
 
 async function buildCdta() {
-    const routesTxt = await readGtfs('routes.txt');
-    const stopsTxt = await readGtfs('stops.txt');
-    const tripsTxt = await readGtfs('trips.txt');
-    const calendarTxt = await readGtfs('calendar.txt');
-    const calendarDatesTxt = await readGtfs('calendar_dates.txt');
-    const stopTimesTxt = await readGtfs('stop_times.txt');
-
-    // --- stops and routes (stable, readable ordering) ---
+    // --- stops (streamed straight into the output array) ---
     const stopIndexByGtfsId = new Map();
     const stopsOut = [];
-    for (const stop of stopsTxt) {
+    await forEachGtfsRow('stops.txt', (stop) => {
         stopIndexByGtfsId.set(stop.stop_id, stopsOut.length);
         stopsOut.push([
             stop.stop_id,
@@ -254,33 +273,42 @@ async function buildCdta() {
             round5(stop.stop_lat),
             round5(stop.stop_lon),
         ]);
-    }
+    });
 
-    const routeIndexByGtfsId = new Map();
-    const routesOut = [];
-    const sortedRoutes = [...routesTxt].sort((a, b) =>
-        (Number(a.route_short_name) || 9999) - (Number(b.route_short_name) || 9999) ||
-        a.route_short_name.localeCompare(b.route_short_name));
-    for (const route of sortedRoutes) {
-        routeIndexByGtfsId.set(route.route_id, routesOut.length);
-        routesOut.push({
+    // --- routes (few, so collect then sort for a stable, readable order) ---
+    const routeRows = [];
+    await forEachGtfsRow('routes.txt', (route) => {
+        routeRows.push({
             id: route.route_id,
             short: route.route_short_name,
             name: route.route_long_name,
             color: route.route_color || '123573',
         });
-    }
+    });
+    routeRows.sort((a, b) =>
+        (Number(a.short) || 9999) - (Number(b.short) || 9999) ||
+        a.short.localeCompare(b.short));
+    const routeIndexByGtfsId = new Map();
+    routeRows.forEach((route, i) => routeIndexByGtfsId.set(route.id, i));
 
     // --- service calendar (same structure the map already uses) ---
     const serviceIndexById = new Map();
     const servicesOut = [];
+    const calendarByService = new Map();
+    await forEachGtfsRow('calendar.txt', (row) => {
+        calendarByService.set(row.service_id, row);
+    });
+    const calendarDateRows = [];
+    await forEachGtfsRow('calendar_dates.txt', (row) => {
+        calendarDateRows.push(row);
+    });
+
     const allServiceIds = [
         ...new Set([
-            ...calendarTxt.map((row) => row.service_id),
-            ...calendarDatesTxt.map((row) => row.service_id),
+            ...calendarByService.keys(),
+            ...calendarDateRows.map((row) => row.service_id),
         ]),
     ].sort();
-    const calendarByService = new Map(calendarTxt.map((row) => [row.service_id, row]));
     for (const serviceId of allServiceIds) {
         serviceIndexById.set(serviceId, servicesOut.length);
         const cal = calendarByService.get(serviceId);
@@ -294,17 +322,27 @@ async function buildCdta() {
         }
     }
     const exceptionsOut = {};
-    for (const row of calendarDatesTxt) {
+    for (const row of calendarDateRows) {
         (exceptionsOut[row.date] ??= []).push([
             serviceIndexById.get(row.service_id),
             Number(row.exception_type),
         ]);
     }
 
-    // --- stop times -> trips -> patterns ---
-    // stop_times.txt is grouped by trip_id. Collect each trip's
-    // [stopIndex, departureMinute] sequence, then fold trips into patterns.
-    const headsignByTrip = new Map(tripsTxt.map((t) => [t.trip_id, t]));
+    // --- trips: keep only the three fields the pattern builder needs ---
+    const tripInfoById = new Map();
+    await forEachGtfsRow('trips.txt', (trip) => {
+        tripInfoById.set(trip.trip_id, {
+            route_id: trip.route_id,
+            trip_headsign: trip.trip_headsign,
+            service_id: trip.service_id,
+        });
+    });
+
+    // --- stop times -> patterns, streamed one row at a time ---
+    // stop_times.txt is grouped by trip_id (GTFS producers universally sort by
+    // trip_id then stop_sequence), so we can fold trips into patterns as rows
+    // arrive without ever holding the whole file.
     const patternsOut = [];
     const patternKeyToIndex = new Map();
 
@@ -314,16 +352,11 @@ async function buildCdta() {
 
     function flushTrip() {
         if (currentTripId === null) return;
-        const trip = headsignByTrip.get(currentTripId);
+        const trip = tripInfoById.get(currentTripId);
         if (!trip) return; // defensive: trips.txt should cover every stop_times row
 
-        const stopIndexes = currentStops;
         const firstMinute = currentTimes[0];
-        const offsets = currentTimes.map((m) => m - firstMinute);
-
-        // Trips that run past midnight still belong to this pattern; the
-        // search handles minutes >= 1440 by checking the previous service day.
-        const key = [trip.route_id, trip.trip_headsign, stopIndexes.join(',')].join('|');
+        const key = [trip.route_id, trip.trip_headsign, currentStops.join(',')].join('|');
         let patternIndex = patternKeyToIndex.get(key);
         if (patternIndex === undefined) {
             patternIndex = patternsOut.length;
@@ -331,11 +364,13 @@ async function buildCdta() {
             patternsOut.push({
                 route: routeIndexByGtfsId.get(trip.route_id),
                 headsign: trip.trip_headsign,
-                stops: stopIndexes,
-                offsets,
+                stops: currentStops,
+                offsets: currentTimes.map((m) => m - firstMinute),
                 trips: [],
             });
         }
+        // Trips that run past midnight still belong to this pattern; the
+        // search handles minutes >= 1440 by checking the previous service day.
         patternsOut[patternIndex].trips.push([
             serviceIndexById.get(trip.service_id),
             firstMinute,
@@ -344,18 +379,22 @@ async function buildCdta() {
         currentTimes = [];
     }
 
-    for (const row of stopTimesTxt) {
-        if (row.trip_id !== currentTripId) {
-            flushTrip();
-            currentTripId = row.trip_id;
-        }
-        const stopIndex = stopIndexByGtfsId.get(row.stop_id);
-        if (stopIndex === undefined) continue; // stop not in stops.txt (should not happen)
-        const clock = row.departure_time || row.arrival_time;
-        const [h, m] = clock.split(':').map(Number);
-        currentStops.push(stopIndex);
-        currentTimes.push(h * 60 + m);
-    }
+    await forEachGtfsRow(
+        'stop_times.txt',
+        (row) => {
+            if (row.trip_id !== currentTripId) {
+                flushTrip();
+                currentTripId = row.trip_id;
+            }
+            const stopIndex = stopIndexByGtfsId.get(row.stop_id);
+            if (stopIndex === undefined) return; // stop not in stops.txt (should not happen)
+            const clock = row.departure_time || row.arrival_time;
+            const [h, m] = clock.split(':').map(Number);
+            currentStops.push(stopIndex);
+            currentTimes.push(h * 60 + m);
+        },
+        ['trip_id', 'stop_id', 'departure_time', 'arrival_time'],
+    );
     flushTrip();
 
     // Sort each pattern's trips by departure and drop duplicate departures
@@ -366,7 +405,15 @@ async function buildCdta() {
             i === 0 || trip[1] !== pattern.trips[i - 1][1] || trip[0] !== pattern.trips[i - 1][0]);
     }
 
-    const feedRow = (await readGtfs('feed_info.txt'))[0] ?? {};
+    let feedRow = {};
+    let sawFeed = false;
+    await forEachGtfsRow('feed_info.txt', (row) => {
+        if (!sawFeed) { feedRow = row; sawFeed = true; }
+    });
+
+    // Release the trip map before returning; it's no longer needed.
+    tripInfoById.clear();
+
     return {
         feed: {
             publisher: feedRow.feed_publisher_name || 'CDTA',
@@ -374,7 +421,7 @@ async function buildCdta() {
             end: feedRow.feed_end_date || '',
         },
         stops: stopsOut,
-        routes: routesOut,
+        routes: routeRows,
         services: servicesOut,
         exceptions: exceptionsOut,
         patterns: patternsOut,
