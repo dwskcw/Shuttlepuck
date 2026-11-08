@@ -6,3 +6,7 @@ CDTA bus routes and schedules are located in the **gtfs/** folder; access to liv
 
 Shuttle routes and locations are included here, but for the live locations, 
   use **https://shuttles.rpi.edu/api/locations** and **https://shuttles.rpi.edu/api/velocities** - public JSON with no API key
+
+The trip planner additionally reads data/gtfs/ directly (trips.txt, stop_times.txt,
+calendar*.txt) via planner/build-planner-data.mjs, so the planner's times come
+straight from the feed rather than from the compressed JSON above.

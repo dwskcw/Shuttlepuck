@@ -2,6 +2,7 @@ import {
     LeafletMap, TileLayer, Polyline, CircleMarker, Marker, DivIcon,
     LayerGroup, LatLngBounds
 } from 'leaflet';
+import { initJourneyUi } from './js/journey-ui.js';
 
 // ---------------------------------------------------------------
 // Config
@@ -24,7 +25,14 @@ const map = new LeafletMap('map', {
     zoom: 17
 });
 
-const tiles = new TileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/512/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiZHdza2N3IiwiYSI6ImNtdzdic2c4YTBtYXcyenM3b3pka2Q5cHMifQ.2xozS12wxM2rVMzTDE-X6w', {
+const MAPBOX_TILES_URL = 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/512/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiZHdza2N3IiwiYSI6ImNtdzZyd3d3ZzBpY2IzMG9wc28weXNsbHgifQ.9zT3RQw_K7LbSSYeJXxPNg';
+
+// The Mapbox token that loads the base tiles also drives the walking
+// directions used by the trip planner (Directions + Matrix APIs).
+const MAPBOX_TOKEN = new URLSearchParams(MAPBOX_TILES_URL.split('?')[1] ?? '').get('access_token') ?? '';
+
+const tiles = new TileLayer(MAPBOX_TILES_URL, {
+
     tileSize: 512,
     zoomOffset: -1,
     maxZoom: 22,
@@ -774,5 +782,6 @@ cdtaDateInput.addEventListener('change', () => {
 });
 map.on('moveend zoomend', cdtaDrawStops);
 renderRouteTree();
+initJourneyUi({ map, apiBase: API_BASE, mapboxToken: MAPBOX_TOKEN });
 startPolling();
 loadCDTA();

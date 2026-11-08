@@ -96,3 +96,113 @@ html, body { height: 100%; margin: 0; }
 .cdta-popup ul { margin: 7px 0 0; padding: 0; list-style: none; max-height: 200px; overflow-y: auto; }
 .cdta-popup li { padding: 5px 0; border-top: 1px solid #e1e5e9; }
 .cdta-popup .cdta-route-chip { padding: 1px 4px; border-radius: 3px; margin: 0 5px; }
+
+/* ------------------------------ trip planner ------------------------------ */
+#journey-open {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 8px;
+    background: #2563eb;
+    color: #fff;
+    font: 600 14px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, .3);
+    cursor: pointer;
+}
+#journey-open:hover { background: #1d4ed8; }
+
+#journey-panel {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    z-index: 1001;
+    width: min(340px, calc(100% - 20px));
+    max-height: calc(100dvh - 20px);
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .97);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, .3);
+    font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: #1c1c1c;
+}
+.journey-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+#journey-close { border: 0; background: transparent; font-size: 15px; cursor: pointer; color: #475569; padding: 2px 6px; }
+#journey-close:hover { background: #eef2f7; border-radius: 4px; }
+
+.journey-endpoints { display: flex; gap: 6px; margin-bottom: 8px; }
+.journey-endpoint {
+    flex: 1;
+    padding: 7px 8px;
+    border: 1px solid #b8c3cf;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    font: inherit;
+}
+.journey-endpoint:hover { border-color: #2563eb; }
+
+.journey-field { display: block; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-bottom: 8px; }
+.journey-field input {
+    display: block; box-sizing: border-box; width: 100%; margin-top: 4px;
+    padding: 5px; border: 1px solid #b8c3cf; border-radius: 4px; background: #fff; font: inherit;
+}
+.journey-field input + input { margin-top: 6px; }
+
+.journey-search-btn {
+    width: 100%;
+    padding: 8px;
+    border: 0;
+    border-radius: 6px;
+    background: #2563eb;
+    color: #fff;
+    font: 600 14px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+    cursor: pointer;
+}
+.journey-search-btn:hover { background: #1d4ed8; }
+
+#journey-hint { margin: 8px 0 0; color: #555; font-size: 12px; }
+
+#journey-results { overflow-y: auto; min-height: 0; margin-top: 8px; padding-right: 3px; }
+.journey-option { border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px; background: #fff; }
+.journey-option.selected { border-color: #2563eb; box-shadow: 0 0 0 1px #2563eb; }
+.journey-option-head {
+    display: flex; align-items: center; gap: 6px; width: 100%;
+    padding: 8px; border: 0; background: #f8fafc; cursor: pointer; font: inherit;
+    border-radius: 6px 6px 0 0;
+}
+.journey-time { font-weight: 700; white-space: nowrap; }
+.journey-badges { display: flex; align-items: center; gap: 3px; flex: 1; min-width: 0; flex-wrap: wrap; }
+.journey-arrow { color: #94a3b8; }
+.journey-chip {
+    padding: 1px 5px; border-radius: 3px; color: #fff; font-size: 11px; font-weight: 600;
+    max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.journey-total { font-size: 11px; color: #667085; white-space: nowrap; }
+
+.journey-legs { margin: 0; padding: 4px 10px 8px; list-style: none; }
+.journey-legs li { padding: 6px 0; border-top: 1px solid #eef1f4; font-size: 12px; }
+.leg-icon {
+    display: inline-block; width: 12px; height: 12px; border-radius: 3px;
+    background: #94a3b8; margin-right: 4px; vertical-align: baseline;
+}
+.leg-meta { display: block; color: #667085; margin-top: 1px; }
+
+.journey-pin { background: none; border: 0; }
+.journey-pin-dot {
+    width: 26px; height: 26px; border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    background: #2563eb; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font: 700 12px/1 system-ui, sans-serif;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .4);
+}
+.journey-pin-dot { transform: rotate(-45deg); }
+.journey-pin-destination .journey-pin-dot { background: #16a34a; }
+.journey-pin-dot > * { transform: rotate(45deg); }
+.journey-pin-dot { font-size: 0; } /* letter hidden; shape + color carry meaning */

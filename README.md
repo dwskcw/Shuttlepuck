@@ -9,3 +9,46 @@ Another interesting angle is our navigation that combines modes of transportatio
 
 We intend to provide an optional ridesharing feature for edge cases such as grocery trips or farther travel, especially to the airport or train station for holiday breaks. Users would be able to discuss fair prices beforehand, without the large cuts that ridesharing services usually take. This service would be explicitly limited to student drivers and riders.
 
+## Running it
+
+```bash
+npm install                          # once (only dependency: pg, for Tiger Data)
+node planner/build-planner-data.mjs  # rebuild the trip-planner data bundle
+node dev-server.mjs                  # then open http://localhost:3001/
+```
+
+## Trip planner (multimodal navigation)
+
+The 🧭 Directions button on the map opens the planner:
+
+1. Click **Set origin**, then click the map; repeat for **Set destination** (markers are draggable).
+2. Optionally change the departure time (defaults to now, Troy time).
+3. **Find routes** lists itineraries that chain walking, RPI shuttles, and CDTA buses — with real departure times, wait times, and transfers — and draws the chosen one on the map.
+
+How it works, in one paragraph each:
+
+- `planner/build-planner-data.mjs` precomputes `planner/planner-data.json` from the raw sources in `data/` (GTFS text files, shuttle schedule/routes, bike docks). Shuttle stop times come from each stop's documented route offset in minutes; CDTA trips are grouped into readable "patterns" (same stop sequence ⇒ one pattern with a list of departure times and service days).
+- `js/journey.js` runs a small RAPTOR-style search in the browser: each round boards one more vehicle, short stop-to-stop footpaths connect the shuttle network to the CDTA network (e.g. City Station shuttle stop ↔ the CDTA stop 57 m away), and every round yields one option so a 14-minute walk can be compared against a wait-for-the-shuttle option honestly.
+- `js/journey-ui.js` handles the panel: click-to-set endpoints, Mapbox walking times for the nearest stops (Directions Matrix API, same token as the base tiles; falls back to straight-line estimates offline), leg-by-leg cards, and map drawing.
+
+Tests: `node --test` covers the time helpers, the build script, and the search (a synthetic two-route scenario plus a real-data sanity check).
+
+## Tiger Data (sponsor integration)
+
+The same data lives in a managed Tiger Data Postgres service, and the live shuttle feed accumulates there as time-series data:
+
+- `db/schema.sql` — CDTA GTFS tables, shuttle routes/stops/departures, bike docks, plus a `shuttle_positions` **hypertable** (one row per GPS ping, time-partitioned) and analytics on top: a continuous aggregate collapses pings to one row per vehicle-minute, and a `shuttle_travel_times` view derives *median travel minutes between shuttle stop pairs by hour of day* from real accumulated GPS history.
+- `db/load.mjs` — loads the repo data into your service (idempotent; re-runs truncate and reload).
+- `db/record-shuttles.mjs` — polls the public shuttle locations API and records pings; leave it running during the hackathon and the travel-time view fills in with real history.
+
+Setup:
+
+```bash
+cp .env.example .env                 # then paste your service's connection string
+psql "$TIGER_DATABASE_URL" -f db/schema.sql
+node --env-file=.env db/load.mjs
+node --env-file=.env db/record-shuttles.mjs &      # start accumulating history
+node --env-file=.env dev-server.mjs               # enables /api/db/* read endpoints
+```
+
+With credentials set, `GET /api/db/shuttle-travel-times` serves the hour-by-hour travel-time table and `GET /api/db/shuttle-activity?hours=2` the recent pings-per-minute sparkline data — the demo line for judges: *"the planner knows how long the shuttle actually takes to downtown at this hour, because it has been watching."* Without credentials everything still works from local JSON; the map degrades gracefully.
