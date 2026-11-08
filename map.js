@@ -43,6 +43,7 @@ const routeTreeContainer = document.getElementById('route-tree');
 // Only these two Shubble routes and two CDTA routes are initially visible.
 const selectedShuttleRoutes = new Set(['NORTH', 'WEST']);
 const selectedCdtaRoutes = new Set();
+let bikeLocationsEnabled = true;
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -577,6 +578,74 @@ async function loadCDTA() {
 }
 
 // ---------------------------------------------------------------
+// Bike locations: GeoJSON Point coordinates are [longitude, latitude].
+// This is a static overlay and does not affect the route or vehicle APIs.
+// ---------------------------------------------------------------
+const bikeLayer = new LayerGroup();
+const bikeStatus = document.getElementById('bike-status');
+let bikeLocationsLoaded = false;
+
+function syncBikeVisibility() {
+    if (bikeLocationsEnabled && bikeLocationsLoaded) {
+        if (!map.hasLayer(bikeLayer)) map.addLayer(bikeLayer);
+    } else if (map.hasLayer(bikeLayer)) {
+        map.removeLayer(bikeLayer);
+    }
+}
+
+async function loadBikeLocations() {
+    try {
+        const response = await fetch('/bikedata.geojson');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (data.type !== 'FeatureCollection' || !Array.isArray(data.features)) {
+            throw new Error('Expected a GeoJSON FeatureCollection');
+        }
+
+        bikeLayer.clearLayers();
+        let plotted = 0;
+        for (const feature of data.features) {
+            if (feature?.geometry?.type !== 'Point') continue;
+            const [longitude, latitude] = feature.geometry.coordinates ?? [];
+            if (!Number.isFinite(longitude) || !Number.isFinite(latitude) ||
+                Math.abs(longitude) > 180 || Math.abs(latitude) > 90) continue;
+
+            const properties = feature.properties ?? {};
+            const name = properties.name || 'Bike location';
+            const popup = document.createElement('div');
+            const heading = document.createElement('strong');
+            heading.textContent = name;
+            popup.append(heading);
+            if (properties.network) {
+                const network = document.createElement('div');
+                network.textContent = `Network: ${properties.network}`;
+                popup.append(network);
+            }
+            if (properties.capacity !== undefined && properties.capacity !== '') {
+                const capacity = document.createElement('div');
+                capacity.textContent = `Station capacity: ${properties.capacity}`;
+                popup.append(capacity);
+            }
+
+            new CircleMarker([latitude, longitude], {
+                radius: 6, color: '#fff', weight: 1.5,
+                fillColor: '#9333ea', fillOpacity: 0.95
+            }).bindPopup(popup).addTo(bikeLayer);
+            plotted++;
+        }
+
+        bikeLocationsLoaded = true;
+        syncBikeVisibility();
+        bikeStatus.textContent = `${plotted} bike locations`;
+        bikeStatus.classList.remove('error');
+    } catch (error) {
+        console.error(error);
+        bikeStatus.textContent = `Bike locations unavailable: ${error.message}`;
+        bikeStatus.classList.add('error');
+    }
+}
+
+// ---------------------------------------------------------------
 // Unified nested route picker. These categories are UI groupings, not
 // official CDTA route classifications. Every route remains available.
 // ---------------------------------------------------------------
@@ -603,8 +672,9 @@ function createRouteTreeModel() {
         {kind: 'shuttle', id: 'NORTH', label: 'North Shuttle', color: routeColors.get('NORTH') || '#2563eb'},
         {kind: 'shuttle', id: 'WEST', label: 'West Shuttle', color: routeColors.get('WEST') || '#b45309'}
     ], true);
+    const bikes = {kind: 'bikes', id: 'bikes', label: 'Bike locations', color: '#9333ea'};
 
-    if (!cdtaTransit) return [shuttles, routeGroup('cdta', 'CDTA (loading…)', [], true)];
+    if (!cdtaTransit) return [shuttles, routeGroup('cdta', 'CDTA (loading…)', [], true), bikes];
 
     const byShort = new Map(cdtaTransit.routes.map((route, index) => [route.short, index]));
     const assigned = new Set();
@@ -639,16 +709,21 @@ function createRouteTreeModel() {
         ...featured,
         routeGroup('troy-more', 'More Troy / nearby routes', moreTroy),
         routeGroup('non-troy', 'Non-Troy routes', nonTroy)
-    ], true)];
+    ], true), bikes];
 }
 
 function routeLeafEnabled(node) {
+    if (node.kind === 'bikes') return bikeLocationsEnabled;
     return node.kind === 'shuttle'
         ? selectedShuttleRoutes.has(node.id)
         : selectedCdtaRoutes.has(node.id);
 }
 
 function setRouteLeaf(node, enabled) {
+    if (node.kind === 'bikes') {
+        bikeLocationsEnabled = enabled;
+        return;
+    }
     const selected = node.kind === 'shuttle' ? selectedShuttleRoutes : selectedCdtaRoutes;
     if (enabled) selected.add(node.id);
     else selected.delete(node.id);
@@ -683,6 +758,7 @@ function applyRouteSelection() {
     syncShuttleVisibility();
     cdtaDrawLines();
     cdtaDrawStops();
+    syncBikeVisibility();
     syncRouteTreeCheckboxes();
 }
 
@@ -776,3 +852,4 @@ map.on('moveend zoomend', cdtaDrawStops);
 renderRouteTree();
 startPolling();
 loadCDTA();
+loadBikeLocations();

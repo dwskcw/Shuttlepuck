@@ -1,0 +1,480 @@
+{
+  "type": "FeatureCollection",
+  "generator": "overpass-turbo",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+  "timestamp": "2026-11-07T20:13:08Z",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "node/5038106365",
+      "properties": {
+        "@id": "node/5038106365",
+        "amenity": "bicycle_rental",
+        "capacity": "8",
+        "name": "State & Swan (SE)",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7598257,
+          42.6532191
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038106369",
+      "properties": {
+        "@id": "node/5038106369",
+        "amenity": "bicycle_rental",
+        "capacity": "6",
+        "name": "Albany Medical Center",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.773682,
+          42.6532349
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038106384",
+      "properties": {
+        "@id": "node/5038106384",
+        "amenity": "bicycle_rental",
+        "capacity": "6",
+        "name": "Madison & Lark",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.767572,
+          42.6524894
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038106389",
+      "properties": {
+        "@id": "node/5038106389",
+        "amenity": "bicycle_rental",
+        "capacity": "9",
+        "name": "Empire State Plaza",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7620142,
+          42.649319
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038106415",
+      "properties": {
+        "@id": "node/5038106415",
+        "amenity": "bicycle_rental",
+        "capacity": "12",
+        "name": "Washington Park - Madison & New Scotland",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7714142,
+          42.6552028
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038106416",
+      "properties": {
+        "@id": "node/5038106416",
+        "amenity": "bicycle_rental",
+        "capacity": "7",
+        "name": "Lark & Spring",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7655245,
+          42.6581509
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038106419",
+      "properties": {
+        "@id": "node/5038106419",
+        "amenity": "bicycle_rental",
+        "capacity": "6",
+        "name": "Holland & Delaware",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7716529,
+          42.6454983
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038114626",
+      "properties": {
+        "@id": "node/5038114626",
+        "amenity": "bicycle_rental",
+        "capacity": "7",
+        "name": "The Point",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7918533,
+          42.6663615
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038122387",
+      "properties": {
+        "@id": "node/5038122387",
+        "amenity": "bicycle_rental",
+        "capacity": "5",
+        "name": "Clinton & Lark",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7598981,
+          42.6598315
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038122388",
+      "properties": {
+        "@id": "node/5038122388",
+        "amenity": "bicycle_rental",
+        "capacity": "7",
+        "name": "Maiden Lane Park",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7506825,
+          42.6501222
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038122389",
+      "properties": {
+        "@id": "node/5038122389",
+        "amenity": "bicycle_rental",
+        "capacity": "6",
+        "name": "Ontario & Madosin",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7818307,
+          42.6606993
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038122390",
+      "properties": {
+        "@id": "node/5038122390",
+        "amenity": "bicycle_rental",
+        "capacity": "10",
+        "name": "Hudson Riverway Park - Corning Preserve",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7430007,
+          42.6558075
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038122391",
+      "properties": {
+        "@id": "node/5038122391",
+        "amenity": "bicycle_rental",
+        "capacity": "7",
+        "name": "Warehouse District",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7453989,
+          42.6607305
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038122392",
+      "properties": {
+        "@id": "node/5038122392",
+        "amenity": "bicycle_rental",
+        "bicycle_rental": "docking_station",
+        "capacity": "7",
+        "name": "State & Eagle (SE)",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7553893,
+          42.6510056
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038122393",
+      "properties": {
+        "@id": "node/5038122393",
+        "amenity": "bicycle_rental",
+        "capacity": "5",
+        "name": "Western & North Lake",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7739743,
+          42.6609795
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038122394",
+      "properties": {
+        "@id": "node/5038122394",
+        "amenity": "bicycle_rental",
+        "capacity": "7",
+        "name": "Palace Theater - Clinton & North Pearl",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7502319,
+          42.6541129
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038122395",
+      "properties": {
+        "@id": "node/5038122395",
+        "amenity": "bicycle_rental",
+        "capacity": "7",
+        "name": "Lark & Spring",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7637417,
+          42.6562097
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/5038122396",
+      "properties": {
+        "@id": "node/5038122396",
+        "amenity": "bicycle_rental",
+        "capacity": "6",
+        "name": "Swinburne Park - Clinton & Ontario",
+        "network": "CDPHP Cycle",
+        "operator": "Social Bicycles Inc."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.77392,
+          42.6681975
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/8332828350",
+      "properties": {
+        "@id": "node/8332828350",
+        "amenity": "bicycle_rental",
+        "bicycle_rental": "docking_station",
+        "capacity": "5",
+        "fee": "yes",
+        "network": "CDPHP Cycle",
+        "website": "https://www.cdphpcycle.com/"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7670925,
+          42.6274204
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/10138106356",
+      "properties": {
+        "@id": "node/10138106356",
+        "amenity": "bicycle_rental"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7681079,
+          42.6511397
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/11090573704",
+      "properties": {
+        "@id": "node/11090573704",
+        "amenity": "bicycle_rental"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.6828362,
+          42.7472742
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/12249028443",
+      "properties": {
+        "@id": "node/12249028443",
+        "amenity": "bicycle_rental"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7811514,
+          42.6783988
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/13067760650",
+      "properties": {
+        "@id": "node/13067760650",
+        "amenity": "bicycle_rental"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.7681899,
+          42.6510534
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/13148691754",
+      "properties": {
+        "@id": "node/13148691754",
+        "amenity": "bicycle_rental",
+        "network": "CDPHP"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.6871992,
+          42.7282238
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/13530265857",
+      "properties": {
+        "@id": "node/13530265857",
+        "amenity": "bicycle_rental",
+        "bicycle_rental": "docking_station",
+        "operator": "CDPHP Cycle!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.6902905,
+          42.7252184
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/14066549124",
+      "properties": {
+        "@id": "node/14066549124",
+        "amenity": "bicycle_rental",
+        "network": "CDPHP Cycle"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.6856812,
+          42.7398498
+        ]
+      }
+    }
+  ]
+}

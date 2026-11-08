@@ -23,7 +23,8 @@ const staticContentTypes = new Map([
     ['/map.css', 'text/css; charset=utf-8'],
     ['/map.js', 'text/javascript; charset=utf-8'],
     ['/cdta-transit.json', 'application/json; charset=utf-8'],
-    ['/cdta-departures.json', 'application/json; charset=utf-8']
+    ['/cdta-departures.json', 'application/json; charset=utf-8'],
+    ['/bikedata.geojson', 'application/geo+json; charset=utf-8']
 ]);
 
 const server = http.createServer(async (req, res) => {
