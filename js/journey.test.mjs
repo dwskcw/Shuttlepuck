@@ -104,6 +104,47 @@ test('rides the shuttle and arrives at downstream stops', () => {
     assert.equal(best.arrival, 600 + 10 + 1);   // ride 10 min, then 1 min walk
 });
 
+test('keeps a shuttle alternative with up to 20 minutes of waiting', () => {
+    const bundle = syntheticBundle();
+    const origin = { lat: 0, lon: 0, label: 'Origin' };
+    const destination = { lat: 0, lon: 0.0036, label: 'Destination' };
+    const itineraries = run(bundle, {
+        origin,
+        destination,
+        date: WEEKDAY,
+        departMinute: 9 * 60 + 48,
+        originAccess: [{ nodeKey: 'shuttle:A0', minutes: 1 }],
+        destAccess: [{ nodeKey: 'shuttle:A2', minutes: 1 }],
+        direct: { walk: { minutes: 10 } },
+    });
+
+    assert.ok(itineraries.some((itinerary) =>
+        itinerary.legs.length === 1 && itinerary.legs[0].type === 'walk'));
+    const shuttleItinerary = itineraries.find((itinerary) =>
+        itinerary.legs.some((leg) => leg.type === 'shuttle'));
+    assert.ok(shuttleItinerary, 'expected a slower shuttle alternative');
+    const shuttle = shuttleItinerary.legs.find((leg) => leg.type === 'shuttle');
+    assert.equal(shuttle.waitMinutes, 11);
+    assert.equal(shuttleItinerary.departure, 9 * 60 + 48);
+    assert.equal(shuttleItinerary.arrival, 600 + 10 + 1);
+});
+
+test('does not offer a shuttle requiring more than 20 minutes of waiting', () => {
+    const bundle = syntheticBundle();
+    const itineraries = run(bundle, {
+        origin: { lat: 0, lon: 0, label: 'Origin' },
+        destination: { lat: 0, lon: 0.0036, label: 'Destination' },
+        date: WEEKDAY,
+        departMinute: 9 * 60 + 35,
+        originAccess: [{ nodeKey: 'shuttle:A0', minutes: 1 }],
+        destAccess: [{ nodeKey: 'shuttle:A2', minutes: 1 }],
+        direct: { walk: { minutes: 10 } },
+    });
+
+    assert.ok(!itineraries.some((itinerary) =>
+        itinerary.legs.some((leg) => leg.type === 'shuttle')));
+});
+
 test('chains shuttle -> footpath -> bus with wait time', () => {
     const bundle = syntheticBundle();
     const originAccess = [{ nodeKey: 'shuttle:A0', minutes: 1 }];

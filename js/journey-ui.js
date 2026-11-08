@@ -537,9 +537,11 @@ function legLine(leg) {
             <span class="leg-meta">${leg.minutes} min · ${time}</span>`;
     }
     if (leg.type === 'shuttle') {
+        const wait = leg.waitMinutes > 0
+            ? `Wait ${escapeHtml(String(leg.waitMinutes))} min for the ${escapeHtml(leg.routeName)} · ` : '';
         return `<span class="leg-icon" style="background:${leg.color}"></span>
             <strong>${escapeHtml(leg.routeName)}</strong> toward campus loop
-            <span class="leg-meta">${escapeHtml(String(leg.from))} to ${escapeHtml(String(leg.to))} · ${time}</span>`;
+            <span class="leg-meta">${wait}${escapeHtml(String(leg.from))} to ${escapeHtml(String(leg.to))} · ${time}</span>`;
     }
     return `<span class="leg-icon" style="background:${leg.color}"></span>
         <strong>CDTA ${escapeHtml(leg.routeShort)}</strong> to ${escapeHtml(leg.headsign ?? '')}
