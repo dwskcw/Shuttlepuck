@@ -1,6 +1,86 @@
 html, body { height: 100%; margin: 0; }
 #map { height: 100%; }
 
+.panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.panel-close {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 4px 10px;
+    color: inherit;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.panel-close:hover,
+.panel-close:focus-visible { background: rgba(0, 0, 0, 0.08); }
+
+.fab-routes {
+    display: none;
+    position: fixed;
+    left: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0));
+    z-index: 1000;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 999px;
+    background: #2563eb;
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    /* ... keep your existing #map and #panel rules ... */
+
+    /* Fix the FABs so they don't stretch */
+    #journey-open, .fab-routes {
+        position: fixed !important;
+        z-index: 1000 !important;
+        
+        /* THE FIX: reset top and force a specific height */
+        top: auto !important; 
+        height: 44px !important;
+        width: auto !important;
+        padding: 0 16px !important;
+        
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 999px !important;
+        box-sizing: border-box !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25) !important;
+        white-space: nowrap !important;
+    }
+
+    #journey-open {
+        bottom: calc(68px + env(safe-area-inset-bottom, 0)) !important;
+        left: 12px !important;
+    }
+    
+    .fab-routes {
+        bottom: calc(12px + env(safe-area-inset-bottom, 0)) !important;
+        left: 12px !important;
+    }
+
+    /* Bulletproof hide: use CSS sibling selectors to hide buttons when panels are open */
+    #panel.open ~ #journey-open,
+    #panel.open ~ .fab-routes,
+    #journey-panel:not([hidden]) ~ #journey-open,
+    #journey-panel:not([hidden]) ~ .fab-routes {
+        display: none !important;
+    }
+}
+
 /* Shuttle marker: a colored dot with a pointer that rotates to the heading. */
 .shuttle-icon { background: none; border: 0; }
 .shuttle {
@@ -245,78 +325,21 @@ html, body { height: 100%; margin: 0; }
 .journey-pin-destination .journey-pin-dot { background: #16a34a; }
 .journey-pin-dot > * { transform: rotate(45deg); }
 .journey-pin-dot { font-size: 0; } /* letter hidden; shape + color carry meaning */
-.journey-walk-handle {
-    background: transparent;
-    border: 0;
-}
-.journey-walk-handle > div {
-    width: 14px;
-    height: 14px;
-    margin: 2px;
-    box-sizing: border-box;
-    border: 2px solid #2563eb;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
-}
 
-/* Keep the map usable on phones: the planner becomes a compact bottom sheet
-   instead of covering the map from the top-left corner. */
-@media (max-width: 640px) {
-    #panel {
-        top: 8px;
-        right: 8px;
-        width: min(250px, calc(100% - 16px));
-        max-height: min(38dvh, 300px);
-        padding: 8px 9px;
-        font-size: 12px;
-    }
+/* Neutral chips/labels for modes that aren't transit lines */
+.journey-chip-walk { background: #e5e7eb; color: #374151; }
+.journey-chip-bike { background: #dcfce7; color: #166534; }
 
-    .routes-panel-title { font-size: 14px; margin-bottom: 5px; }
-    .route-tree-row { min-height: 24px; }
-    .schedule-field { padding-top: 6px; margin-top: 6px; }
-
-    #journey-open {
-        top: auto;
-        bottom: 12px;
-        left: 8px;
-        padding: 8px 11px;
-        font-size: 13px;
-    }
-
-    #journey-panel {
-        left: 8px;
-        right: 8px;
-        top: auto;
-        bottom: 8px;
-        width: auto;
-        max-height: min(58dvh, 480px);
-        padding: 9px 10px;
-        border-radius: 10px;
-        font-size: 12px;
-    }
-
-    .journey-head { margin-bottom: 5px; }
-    .journey-endpoints { gap: 5px; margin-bottom: 5px; }
-    .journey-endpoint { padding: 6px; }
-    .journey-field { padding-top: 6px; margin-bottom: 6px; }
-    .journey-field input { padding: 4px; }
-    .journey-field input + input { margin-top: 4px; }
-    .journey-modes { gap: 3px 8px; margin-bottom: 6px; padding: 5px 6px; }
-    .journey-search-btn { padding: 7px; font-size: 13px; }
-    #journey-hint { margin-top: 6px; }
-    #journey-results { margin-top: 6px; }
-    .journey-option { margin-bottom: 6px; }
-    .journey-option-head { padding: 6px; gap: 4px; }
-    .journey-time { font-size: 12px; }
-    .journey-total { display: none; }
-    .journey-legs { padding: 2px 8px 5px; }
-    .journey-legs li { padding: 4px 0; font-size: 11px; }
-}
-
-/* Landscape phones and short desktop windows need a shorter overlay so the
-   map remains visible while route results stay independently scrollable. */
-@media (max-height: 600px) {
-    #panel { max-height: 32dvh; }
-    #journey-panel { max-height: 72dvh; }
+.leg-label {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 4px;
+    background: #e5e7eb;
+    color: #374151;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-right: 4px;
+    vertical-align: middle;
 }

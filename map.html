@@ -6,7 +6,12 @@
     <title>Live Map - Shuttlepuck</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@2.0.0-beta.2/dist/leaflet.css">
     <script type="importmap">
-        {"imports": {"leaflet": "https://cdn.jsdelivr.net/npm/leaflet@2.0.0-beta.2/dist/leaflet.js"}}
+        {
+            "imports": {
+                "leaflet": "https://cdn.jsdelivr.net/npm/leaflet@2.0.0-beta.2/dist/leaflet.js",
+                "leaflet-providers": "https://cdn.jsdelivr.net/npm/leaflet-providers@2.0.0/leaflet-providers.js"
+            }
+        }
     </script>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="stylesheet" href="./map.css">
@@ -14,7 +19,11 @@
 <body>
     <div id="map"></div>
     <aside id="panel">
-        <p id="status" role="status">Loading routes…</p>
+        <div class="panel-head">
+            <p id="status" role="status">Loading routes…</p>
+            <button id="routes-close" type="button" class="panel-close"
+                aria-label="Close route list">✕</button>
+        </div>
         <section id="routes-panel" aria-label="Route visibility controls">
             <div class="routes-panel-title">Visible routes</div>
             <div id="route-tree" aria-label="Nested route checkboxes"></div>
@@ -26,7 +35,10 @@
         </section>
     </aside>
 
-    <button id="journey-open" type="button">🧭 Directions</button>
+    <button id="routes-open" type="button" class="fab-routes"
+        aria-controls="panel" aria-expanded="false">Routes</button>
+
+    <button id="journey-open" type="button">Directions</button>
 
     <aside id="journey-panel" aria-label="Trip planner" hidden>
         <div class="journey-head">
