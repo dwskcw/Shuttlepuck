@@ -388,6 +388,9 @@ function reconstruct(index, roundResult, parents, { origin, destination, departM
             departMinute,
             arriveMinute: departMinute + option.minutes,
             docks: option.docks,
+            geometry: option.geometry,
+            fromPoint: { lat: origin.lat, lon: origin.lon },
+            toPoint: { lat: destination.lat, lon: destination.lon },
         }];
     }
 
@@ -411,6 +414,10 @@ function reconstruct(index, roundResult, parents, { origin, destination, departM
             const fromLabel = isSeed
                 ? (origin.label ?? 'Origin')
                 : (nodes.get(hop.parent.from)?.label ?? hop.parent.from);
+            const fromPoint = isSeed
+                ? { lat: origin.lat, lon: origin.lon }
+                : nodes.get(hop.parent.from);
+            const toPoint = nodes.get(hop.nodeKey);
             legs.push({
                 type: 'walk',
                 from: fromLabel,
@@ -418,6 +425,8 @@ function reconstruct(index, roundResult, parents, { origin, destination, departM
                 minutes: via.minutes,
                 departMinute: clock,
                 arriveMinute: clock + via.minutes,
+                fromPoint,
+                toPoint,
             });
             clock += via.minutes;
         } else { // ride
@@ -430,6 +439,7 @@ function reconstruct(index, roundResult, parents, { origin, destination, departM
     const lastStopKey = roundResult.arrivalAt.stopKey;
     const finalWalk = destAccessMin.get(lastStopKey);
     if (finalWalk !== undefined && Number.isFinite(finalWalk)) {
+        const fromPoint = nodes.get(lastStopKey);
         legs.push({
             type: 'walk',
             from: nodes.get(lastStopKey)?.label ?? lastStopKey,
@@ -437,6 +447,8 @@ function reconstruct(index, roundResult, parents, { origin, destination, departM
             minutes: finalWalk,
             departMinute: clock,
             arriveMinute: clock + finalWalk,
+            fromPoint,
+            toPoint: { lat: destination.lat, lon: destination.lon },
         });
     }
     return legs;
