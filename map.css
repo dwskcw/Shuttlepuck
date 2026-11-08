@@ -35,12 +35,17 @@ html, body { height: 100%; margin: 0; }
 
 /* Live shuttle status */
 #panel {
+
     position: absolute;
-    left: 10px;
-    bottom: 24px;
+    top: 10px;
+    right: 10px;
     z-index: 1000;
-    max-width: min(260px, calc(100% - 20px));
-    padding: 10px 12px;
+    box-sizing: border-box;
+    width: min(310px, calc(100% - 20px));
+    max-height: calc(100dvh - 44px);
+    display: flex;
+    flex-direction: column;
+    padding: 11px 12px;
     border-radius: 8px;
     background: rgba(255, 255, 255, .94);
     box-shadow: 0 1px 6px rgba(0, 0, 0, .3);
@@ -50,24 +55,17 @@ html, body { height: 100%; margin: 0; }
 #status { margin: 0; color: #555; }
 #status.error { color: #b00020; }
 
-/* Checkbox tree: group controls affect all descendant routes. */
+/* Route controls now share the shuttle status panel. */
 #routes-panel {
-    position: absolute;
-    right: 10px;
-    top: 10px;
-    z-index: 1000;
-    width: min(310px, calc(100% - 20px));
-    max-height: calc(100dvh - 20px);
     display: flex;
     flex-direction: column;
-    padding: 12px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, .97);
-    box-shadow: 0 1px 6px rgba(0, 0, 0, .3);
-    font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    min-height: 0;
+    margin-top: 9px;
+    padding-top: 9px;
+    border-top: 1px solid #dfe4ea;
 }
 .routes-panel-title { font-size: 16px; font-weight: 700; margin-bottom: 7px; }
-#route-tree { overflow-y: auto; min-height: 0; padding-right: 3px; }
+#route-tree { overflow-y: auto; min-height: 0; flex: 1; padding-right: 3px; }
 .route-tree-node { margin: 0; }
 .route-tree-children { margin-left: 15px; border-left: 1px solid #dfe4ea; padding-left: 5px; }
 .route-tree-row { display: flex; align-items: center; min-height: 28px; gap: 5px; }
@@ -90,6 +88,8 @@ html, body { height: 100%; margin: 0; }
 }
 #cdta-status { color: #555; margin: 7px 0 0; font-size: 12px; }
 #cdta-status.error { color: #b00020; }
+#bike-status { color: #555; margin: 5px 0 0; font-size: 12px; }
+#bike-status.error { color: #b00020; }
 .cdta-popup { min-width: 225px; max-width: 310px; }
 .cdta-popup h3 { font-size: 15px; margin: 0 0 3px; }
 .cdta-popup .muted { color: #666; font-size: 12px; }

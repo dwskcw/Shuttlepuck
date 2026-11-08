@@ -73,7 +73,8 @@ const staticContentTypes = new Map([
     ['/planner/planner-data.json', 'application/json; charset=utf-8'],
     ['/js/journey.js', 'text/javascript; charset=utf-8'],
     ['/js/journey-ui.js', 'text/javascript; charset=utf-8'],
-    ['/js/time.js', 'text/javascript; charset=utf-8']
+    ['/js/time.js', 'text/javascript; charset=utf-8'],
+    ['/bikedata.geojson', 'application/geo+json; charset=utf-8']
 ]);
 
 const server = http.createServer(async (req, res) => {

@@ -15,14 +15,15 @@
     <div id="map"></div>
     <aside id="panel">
         <p id="status" role="status">Loading routes…</p>
-    </aside>
-    <aside id="routes-panel" aria-label="Route visibility controls">
-        <div class="routes-panel-title">Visible routes</div>
-        <div id="route-tree" aria-label="Nested route checkboxes"></div>
-        <label class="schedule-field">CDTA schedule date
-            <input id="cdta-date" type="date">
-        </label>
-        <p id="cdta-status" role="status">Loading CDTA data…</p>
+        <section id="routes-panel" aria-label="Route visibility controls">
+            <div class="routes-panel-title">Visible routes</div>
+            <div id="route-tree" aria-label="Nested route checkboxes"></div>
+            <label class="schedule-field">CDTA schedule date
+                <input id="cdta-date" type="date">
+            </label>
+            <p id="cdta-status" role="status">Loading CDTA data…</p>
+            <p id="bike-status" role="status">Loading bike locations…</p>
+        </section>
     </aside>
 
     <button id="journey-open" type="button">🧭 Directions</button>
