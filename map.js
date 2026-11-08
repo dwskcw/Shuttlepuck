@@ -25,7 +25,7 @@ const map = new LeafletMap('map', {
     zoom: 17
 });
 
-const tiles = new TileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/512/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiZHdza2N3IiwiYSI6ImNtdzZyd3d3ZzBpY2IzMG9wc28weXNsbHgifQ.9zT3RQw_K7LbSSYeJXxPNg', {
+const tiles = new TileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/512/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiZHdza2N3IiwiYSI6ImNtdzdic2c4YTBtYXcyenM3b3pka2Q5cHMifQ.2xozS12wxM2rVMzTDE-X6w', {
     tileSize: 512,
     zoomOffset: -1,
     maxZoom: 22,
