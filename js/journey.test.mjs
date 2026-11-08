@@ -145,6 +145,40 @@ test('does not offer a shuttle requiring more than 20 minutes of waiting', () =>
         itinerary.legs.some((leg) => leg.type === 'shuttle')));
 });
 
+test('does not offer shuttle routes that require more walking than walking directly', () => {
+    const bundle = syntheticBundle();
+    const itineraries = run(bundle, {
+        origin: { lat: 0, lon: 0, label: 'Origin' },
+        destination: { lat: 0, lon: 0.0036, label: 'Destination' },
+        date: WEEKDAY,
+        departMinute: 9 * 60 + 35,
+        originAccess: [{ nodeKey: 'shuttle:A0', minutes: 14 }],
+        destAccess: [{ nodeKey: 'shuttle:A2', minutes: 14 }],
+        direct: { walk: { minutes: 7 } },
+    });
+
+    assert.ok(itineraries.some((itinerary) =>
+        itinerary.legs.length === 1 && itinerary.legs[0].type === 'walk'));
+    assert.ok(!itineraries.some((itinerary) =>
+        itinerary.legs.some((leg) => leg.type === 'shuttle')));
+});
+
+test('keeps shuttle alternatives with modestly more walking than walking directly', () => {
+    const bundle = syntheticBundle();
+    const itineraries = run(bundle, {
+        origin: { lat: 0, lon: 0, label: 'Origin' },
+        destination: { lat: 0, lon: 0.0036, label: 'Destination' },
+        date: WEEKDAY,
+        departMinute: 9 * 60 + 48,
+        originAccess: [{ nodeKey: 'shuttle:A0', minutes: 6 }],
+        destAccess: [{ nodeKey: 'shuttle:A2', minutes: 6 }],
+        direct: { walk: { minutes: 10 } },
+    });
+
+    assert.ok(itineraries.some((itinerary) =>
+        itinerary.legs.some((leg) => leg.type === 'shuttle')));
+});
+
 test('chains shuttle -> footpath -> bus with wait time', () => {
     const bundle = syntheticBundle();
     const originAccess = [{ nodeKey: 'shuttle:A0', minutes: 1 }];

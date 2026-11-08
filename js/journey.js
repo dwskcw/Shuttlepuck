@@ -23,6 +23,7 @@ import { previousDate, serviceRuns, shuttleDayType } from './time.js';
 const MAX_ROUNDS = 3;           // rounds = max vehicles used (walk → bus → shuttle)
 const MAX_CANDIDATE_TRIPS = 40; // per pattern, safety cap when scanning departures
 const MAX_SHUTTLE_WAIT_MINUTES = 20;
+const MAX_SHUTTLE_WALK_RATIO = 2;
 const WALK_M_PER_MIN = 75;      // ~4.5 km/h street walking (estimates only)
 const BIKE_M_PER_MIN = 200;     // ~12 km/h riding speed for dock-to-dock estimates
 const DOCK_ACCESS_M = 600;      // max walk to grab/leave a shared bike
@@ -333,6 +334,7 @@ export function search(index, {
             origin, destination, departMinute, direct, destAccessMin,
             allowWalk,
         });
+        if (hasExcessiveShuttleWalking(legs, direct.walk)) continue;
         const signature = JSON.stringify(legs.map((leg) => [leg.type, leg.fromNode ?? leg.from, leg.toNode ?? leg.to, leg.departMinute]));
         if (seen.has(signature)) continue;
         seen.add(signature);
@@ -352,6 +354,7 @@ export function search(index, {
         for (const itinerary of findShuttleAlternatives(index, {
             origin, destination, date, departMinute, originAccess, destAccess,
         })) {
+            if (hasExcessiveShuttleWalking(itinerary.legs, direct.walk)) continue;
             const signature = JSON.stringify(itinerary.legs.map((leg) =>
                 [leg.type, leg.fromNode ?? leg.from, leg.toNode ?? leg.to, leg.departMinute]));
             if (seen.has(signature)) continue;
@@ -362,6 +365,17 @@ export function search(index, {
 
     itineraries.sort((a, b) => a.arrival - b.arrival);
     return itineraries;
+}
+
+function totalWalkMinutes(legs) {
+    return legs.reduce((total, leg) =>
+        total + (leg.type === 'walk' ? leg.minutes : 0), 0);
+}
+
+function hasExcessiveShuttleWalking(legs, directWalk) {
+    return Boolean(directWalk)
+        && legs.some((leg) => leg.type === 'shuttle')
+        && totalWalkMinutes(legs) > directWalk.minutes * MAX_SHUTTLE_WALK_RATIO;
 }
 
 function findShuttleAlternatives(index, {
